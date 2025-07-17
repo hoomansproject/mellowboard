@@ -27,3 +27,15 @@ You can check out the [create-t3-app GitHub repository](https://github.com/t3-os
 ## How do I deploy this?
 
 Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+
+
+## TODOS
+- [ ] finish deployment
+- [ ] finish db schemas
+- [ ] fetch sheet data and save it
+- [ ] build logic for the cron job
+- [ ] add github actions
+- [ ] make sure the db is being updated successfully
+- [ ] handle errors for cron job failures or exception
+- [ ] create leaderboard page
+- [ ] make sure data is represented well
