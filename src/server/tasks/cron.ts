@@ -38,8 +38,8 @@ export const runCronJob = async () => {
   );
 
   if (logsToInsert.length > 0) {
-    await updateLogs(logsToInsert);
-    console.log(`✅ Inserted ${logsToInsert.length} logs.`);
+    const updatedLogs = await updateLogs(logsToInsert);
+    console.log(`✅ Inserted ${updatedLogs} logs.`);
   } else {
     console.log("ℹ️ No logs to insert.");
   }
