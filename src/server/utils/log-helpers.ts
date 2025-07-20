@@ -156,7 +156,11 @@ export async function generateCronLogs(
         blue: color.blue ?? 0,
       });
 
-      if (colorName === Color.Transparent && value.trim() === "") continue;
+      if (
+        (colorName === Color.Transparent || colorName === Color.Unknown) &&
+        value.trim() === ""
+      )
+        continue;
 
       logsToInsert.push({
         userId,
@@ -171,10 +175,19 @@ export async function generateCronLogs(
   return logsToInsert;
 }
 
-export async function updateLogs(pendingLogs: NewLog[]) {
+export async function updateLogs(pendingLogs: NewLog[]): Promise<number> {
+  let count = 0;
   await db.transaction(async (tx) => {
     for (const log of pendingLogs) {
-      await tx.insert(logs).values(log);
+      const inserted = await tx
+        .insert(logs)
+        .values(log)
+        .onConflictDoNothing({ target: [logs.userId, logs.taskDate] })
+        .returning({ id: logs.id });
+
+      if (!inserted?.[0]?.id) continue;
+
+      count += 1;
 
       const result = await tx
         .select({ sum: sql<number>`SUM(points)` })
@@ -191,4 +204,6 @@ export async function updateLogs(pendingLogs: NewLog[]) {
         .where(eq(schema.users.id, log.userId));
     }
   });
+
+  return count;
 }

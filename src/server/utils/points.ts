@@ -1,7 +1,8 @@
 import type { LogStatus } from "../db/enums/log";
 import { Color } from "./color";
 
-const STATUS_REGEX = /\[\s*(DONE|NO\s*TASK|NOT\s*AVAILABLE)\s*\]/i;
+const STATUS_REGEX =
+  /\[\s*(DONE|NO\s*TASK|NOT\s*AVAILABLE|FREEZE[-\s]?CARD|FC)\s*\]/i;
 
 export function calculateSeedPoints(text: string, color: Color): number {
   const normalizedText = text.trim();
@@ -10,6 +11,7 @@ export function calculateSeedPoints(text: string, color: Color): number {
   if (color === Color.Green) return 1;
   // 2️⃣ If text includes "[DONE]" in various formats → 1 point
   const match = STATUS_REGEX.exec(normalizedText);
+
   if (match && match[1]?.replace(/\s+/g, " ").toUpperCase() === "DONE") {
     return 1;
   }
@@ -36,6 +38,9 @@ export function getSeedStatusFromTextAndColor(
   const normalizedText = text.trim();
   const match = STATUS_REGEX.exec(normalizedText);
   const status = match?.[1]?.replace(/\s+/g, " ").toUpperCase();
+
+  if (status === "FREEZE CARD" || status === "FC" || status === "FREEZE-CARD")
+    return "freeze_card";
 
   // ✅ If green or DONE → worked
   if (color === Color.Green) return "worked";
