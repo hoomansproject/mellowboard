@@ -9,8 +9,14 @@ export async function GET(request: NextRequest) {
   }
 
   await runCronJob();
-  return new Response(JSON.stringify({ success: true }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  return new Response(
+    JSON.stringify({
+      success: true,
+      message: "Cron job ran successfully",
+    }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    },
+  );
 }
