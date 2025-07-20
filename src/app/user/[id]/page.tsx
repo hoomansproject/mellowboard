@@ -190,16 +190,18 @@ export default function UserDetailsPage() {
 
   if (!user) {
     return (
-      <div className="mx-auto w-full max-w-4xl p-4">
+      <div className="mx-auto w-full max-w-4xl p-2 sm:p-4">
         <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="p-8 text-center">
-            <h2 className="mb-2 text-xl font-semibold">User not found</h2>
-            <p className="mb-4 text-gray-500">
+          <div className="p-6 text-center sm:p-8">
+            <h2 className="mb-2 text-lg font-semibold sm:text-xl">
+              User not found
+            </h2>
+            <p className="mb-4 text-sm text-gray-500 sm:text-base">
               The user you&apos;re looking for doesn&apos;t exist.
             </p>
             <button
               onClick={() => router.push("/")}
-              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none sm:px-4"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Leaderboard
@@ -219,6 +221,14 @@ export default function UserDetailsPage() {
     });
   };
 
+  const formatDateMobile = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   const groupLogsByDate = (logs: typeof pointLogs) => {
     const grouped: Record<string, typeof pointLogs> = {};
     logs.forEach((log) => {
@@ -231,52 +241,52 @@ export default function UserDetailsPage() {
   const groupedLogs = groupLogsByDate(pointLogs);
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 p-4">
+    <div className="mx-auto w-full max-w-4xl space-y-4 p-2 sm:space-y-6 sm:p-4">
       {/* Header */}
-      <div className="mb-6 flex items-center gap-4">
+      <div className="mb-4 flex items-center gap-4 sm:mb-6">
         <button
           onClick={() => router.push("/")}
           className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
         >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Leaderboard
+          <ArrowLeft className="mr-1 h-4 w-4 sm:mr-2" />
+          <span className="hidden sm:inline">Back to Leaderboard</span>
+          <span className="sm:hidden">Back</span>
         </button>
       </div>
 
       {/* User Profile Card */}
       <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="p-6">
-          <div className="flex items-center gap-6">
-            <div className="relative h-20 w-20">
-              {user.avatar && (
-                <Image
-                  src={user.avatar}
-                  alt={user.name}
-                  fill
-                  className="h-20 w-20 rounded-full object-cover"
-                  onError={() => console.log("Error loading image")}
-                />
-              )}
+        <div className="p-4 sm:p-6">
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
+            <div className="relative h-16 w-16 flex-shrink-0 sm:h-20 sm:w-20">
+              <Image
+                src={user.avatar || "/placeholder.svg"}
+                alt={user.name}
+                fill
+                className="h-16 w-16 rounded-full object-cover sm:h-20 sm:w-20"
+              />
             </div>
 
-            <div className="flex-1">
-              <div className="mb-2 flex items-center gap-3">
-                <h1 className="text-2xl font-bold">{user.name}</h1>
+            <div className="flex-1 text-center sm:text-left">
+              <div className="mb-2 flex flex-col items-center gap-2 sm:flex-row sm:items-start sm:gap-3">
+                <h1 className="text-xl font-bold sm:text-2xl">{user.name}</h1>
                 <span className="inline-flex items-center rounded-full border border-gray-300 bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
                   Rank #{user.rank}
                 </span>
               </div>
-              <p className="mb-3 text-gray-500">{user.username}</p>
+              <p className="mb-3 text-sm text-gray-500 sm:text-base">
+                {user.username}
+              </p>
 
-              <div className="flex gap-6 text-sm">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-4 text-sm sm:flex-row sm:gap-6">
+                <div className="flex items-center justify-center gap-2 sm:justify-start">
                   <TrendingUp className="h-4 w-4 text-green-500" />
                   <span className="font-semibold">
                     {user.totalPoints.toLocaleString()}
                   </span>
                   <span className="text-gray-500">total points</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center gap-2 sm:justify-start">
                   <Activity className="h-4 w-4 text-orange-500" />
                   <span className="font-semibold">{user.currentStreak}</span>
                   <span className="text-gray-500">day streak</span>
@@ -289,13 +299,13 @@ export default function UserDetailsPage() {
 
       {/* Point Logs */}
       <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="border-b border-gray-200 p-6">
+        <div className="border-b border-gray-200 p-4 sm:p-6">
           <h2 className="flex items-center gap-2 text-lg font-semibold">
-            <Calendar className="h-5 w-5" />
+            <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
             Daily Activity
           </h2>
         </div>
-        <div className="space-y-3 p-6">
+        <div className="space-y-2 p-2 sm:space-y-3 sm:p-6">
           {Object.entries(groupedLogs)
             .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
             .map(([date, logs]) => {
@@ -313,12 +323,17 @@ export default function UserDetailsPage() {
               return (
                 <div
                   key={date}
-                  className="flex items-center justify-between rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
+                  className="flex flex-col justify-between gap-3 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 sm:flex-row sm:items-center sm:gap-4 sm:p-4"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="min-w-[60px] text-center">
-                      <p className="text-sm font-semibold">
-                        {formatDate(date).split(",")[0]}
+                  <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+                    <div className="min-w-[50px] flex-shrink-0 text-center sm:min-w-[60px]">
+                      <p className="text-xs font-semibold sm:text-sm">
+                        <span className="sm:hidden">
+                          {formatDateMobile(date)}
+                        </span>
+                        <span className="hidden sm:inline">
+                          {formatDate(date).split(",")[0]}
+                        </span>
                       </p>
                       <p className="text-xs text-gray-500">
                         {new Date(date).toLocaleDateString("en-US", {
@@ -327,9 +342,9 @@ export default function UserDetailsPage() {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
                       <div
-                        className={`rounded-full p-2 ${
+                        className={`flex-shrink-0 rounded-full p-1.5 sm:p-2 ${
                           dayTotal > 0
                             ? "bg-green-100 text-green-600"
                             : dayTotal < 0
@@ -338,16 +353,16 @@ export default function UserDetailsPage() {
                         }`}
                       >
                         {dayTotal > 0 ? (
-                          <Plus className="h-4 w-4" />
+                          <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                         ) : dayTotal < 0 ? (
-                          <Minus className="h-4 w-4" />
+                          <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
                         ) : (
-                          <Activity className="h-4 w-4" />
+                          <Activity className="h-3 w-3 sm:h-4 sm:w-4" />
                         )}
                       </div>
 
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">
                           {mainActivity?.activity}
                         </p>
                         {logs.length > 1 && (
@@ -356,29 +371,33 @@ export default function UserDetailsPage() {
                             {logs.length === 2 ? "activity" : "activities"}
                           </p>
                         )}
-                        <p className="text-xs text-gray-500">
+                        <p className="hidden text-xs text-gray-500 sm:block">
                           {mainActivity?.time}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <p
-                      className={`text-lg font-bold ${
-                        dayTotal > 0
-                          ? "text-green-600"
-                          : dayTotal < 0
-                            ? "text-red-600"
-                            : "text-gray-600"
-                      }`}
-                    >
-                      {dayTotal > 0 ? "+" : ""}
-                      {dayTotal}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Total: {mainActivity?.runningTotal.toLocaleString()}
-                    </p>
+                  <div className="flex justify-between text-right sm:block sm:text-right">
+                    <div>
+                      <p
+                        className={`text-base font-bold sm:text-lg ${
+                          dayTotal > 0
+                            ? "text-green-600"
+                            : dayTotal < 0
+                              ? "text-red-600"
+                              : "text-gray-600"
+                        }`}
+                      >
+                        {dayTotal > 0 ? "+" : ""}
+                        {dayTotal}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">
+                        Total: {mainActivity?.runningTotal.toLocaleString()}
+                      </p>
+                    </div>
                   </div>
                 </div>
               );
