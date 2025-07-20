@@ -6,7 +6,7 @@ import {
   parseDates,
   parseUsernames,
   updateLogs,
-} from "../utils/seed-helpers";
+} from "../utils/log-helpers";
 
 async function main() {
   const auth = new google.auth.GoogleAuth({
