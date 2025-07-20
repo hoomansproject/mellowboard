@@ -1,0 +1,12 @@
+name: Every 5 minutes cron
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # every 5 minutes (GitHub Actions minimum)
+
+jobs:
+  run-cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hit Vercel cron endpoint
+        run: curl -X GET https://mellowboard.vercel.app/api/run-cron-job
