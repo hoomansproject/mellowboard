@@ -6,7 +6,7 @@ import { api } from "@/trpc/react";
 
 export function LatestPost() {
   const [latestPost] = api.post.getLatest.useSuspenseQuery();
-
+  const { data: leaderboard } = api.leaderboard.getLeaderboard.useQuery();
   const utils = api.useUtils();
   const [name, setName] = useState("");
   const createPost = api.post.create.useMutation({
@@ -45,6 +45,16 @@ export function LatestPost() {
           {createPost.isPending ? "Submitting..." : "Submit"}
         </button>
       </form>
+
+      <h2 className="mt-4 text-2xl font-bold">Leaderboard</h2>
+      <ul className="mt-4 flex flex-col gap-2">
+        {leaderboard?.map((user) => (
+          <li key={user.userId} className="flex items-center gap-4">
+            <span className="text-lg font-medium">{user.username}</span>
+            <span className="text-lg font-medium">{user.totalPoints}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
