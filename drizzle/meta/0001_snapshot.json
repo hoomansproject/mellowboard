@@ -1,6 +1,6 @@
 {
-  "id": "44c3fa08-94ef-46ac-b7ca-8b601cffeeab",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "19f68bc4-01e6-45e9-bd3e-81d12eb45069",
+  "prevId": "44c3fa08-94ef-46ac-b7ca-8b601cffeeab",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -105,7 +105,16 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "mellowboard_logs_user_id_task_date_unique": {
+          "name": "mellowboard_logs_user_id_task_date_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "task_date"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
