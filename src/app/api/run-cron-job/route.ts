@@ -1,4 +1,4 @@
-// src/pages/api/run-cron-job.ts
+// src/app/api/run-cron-job.ts
 import type { NextApiRequest, NextApiResponse } from "next";
 import { runCronJob } from "@/server/tasks/cron";
 import { env } from "@/env";
