@@ -1,15 +1,16 @@
-// src/app/api/run-cron-job.ts
-import type { NextApiRequest, NextApiResponse } from "next";
 import { runCronJob } from "@/server/tasks/cron";
 import { env } from "@/env";
+import type { NextRequest } from "next/server";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse,
-) {
-  if (req.headers.authorization !== `Bearer ${env.CRON_SECRET}`) {
-    return res.status(401).end("Unauthorized");
+export async function GET(request: NextRequest) {
+  const auth = request.headers.get("authorization");
+  if (auth !== `Bearer ${env.CRON_SECRET}`) {
+    return new Response("Unauthorized", { status: 401 });
   }
+
   await runCronJob();
-  res.status(200).json({ success: true, message: "Cron job executed" });
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
 }
