@@ -193,10 +193,14 @@ export default function Component() {
 
                 <div className="relative h-10 w-10">
                   <Image
-                    src={user.avatar || "/placeholder.svg"}
+                    src={user.avatar || "https://picsum.photos/200/300"}
                     alt={user.name}
                     fill
                     className="h-10 w-10 rounded-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src =
+                        "https://placehold.co/600x400@2x.png";
+                    }}
                   />
                 </div>
 
