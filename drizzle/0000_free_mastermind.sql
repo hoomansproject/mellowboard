@@ -3,6 +3,8 @@ CREATE TABLE "mellowboard_cron_status" (
 	"status" varchar(100),
 	"created_at" timestamp DEFAULT now()
 );
+CREATE TYPE log_type AS ENUM ('meeting', 'task');
+CREATE TYPE log_status AS ENUM ('worked', 'not_available', 'no_task', 'freeze_card');
 --> statement-breakpoint
 CREATE TABLE "mellowboard_logs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
