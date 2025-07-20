@@ -2,7 +2,10 @@
 // https://orm.drizzle.team/docs/sql-schema-declaration
 
 import { sql } from "drizzle-orm";
-import { index, pgTableCreator } from "drizzle-orm/pg-core";
+import { index, pgTableCreator, unique } from "drizzle-orm/pg-core";
+
+import { uuid, varchar, integer, timestamp } from "drizzle-orm/pg-core";
+import { logTypePg, logStatusPg } from "./enums/log";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -25,3 +28,42 @@ export const posts = createTable(
   }),
   (t) => [index("name_idx").on(t.name)],
 );
+
+//mellowboard tables
+
+// ✅ users table
+export const users = createTable("users", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 100 }).unique().notNull(),
+  freezeCardCount: integer("freeze_card_count").notNull().default(0),
+});
+
+// ✅ logs table
+export const logs = createTable(
+  "logs",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    type: logTypePg("type").notNull(),
+    status: logStatusPg("status").notNull(),
+    points: integer("points").notNull(),
+    taskDate: timestamp("task_date"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [unique().on(table.userId, table.taskDate)],
+);
+
+// ✅ cron_status table
+export const cronStatus = createTable("cron_status", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  status: varchar("status", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
