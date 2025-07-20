@@ -14,6 +14,7 @@ export const env = createEnv({
     GOOGLE_CLIENT_EMAIL: z.string().email(),
     GOOGLE_PRIVATE_KEY: z.string(),
     SHEET_ID: z.string().min(1),
+    CRON_SECRET: z.string().min(1),
   },
 
   /**
@@ -35,6 +36,7 @@ export const env = createEnv({
     GOOGLE_CLIENT_EMAIL: process.env.GOOGLE_CLIENT_EMAIL,
     GOOGLE_PRIVATE_KEY: process.env.GOOGLE_PRIVATE_KEY,
     SHEET_ID: process.env.SHEET_ID,
+    CRON_SECRET: process.env.CRON_SECRET,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**
