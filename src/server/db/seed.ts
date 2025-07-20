@@ -1,8 +1,12 @@
 import { google } from "googleapis";
-import { Pool } from "pg";
-import { drizzle } from "drizzle-orm/node-postgres";
 import { env } from "@/env";
-import * as schema from "./schema"; // your Drizzle schema
+import {
+  generateLogs,
+  getOrInsertUserIds,
+  parseDates,
+  parseUsernames,
+  updateLogs,
+} from "../utils/seed-helpers";
 
 async function main() {
   const auth = new google.auth.GoogleAuth({
@@ -21,31 +25,21 @@ async function main() {
   });
 
   const rowData = res.data.sheets?.[0]?.data?.[0]?.rowData ?? [];
-  const rowMetadata = res.data.sheets?.[0]?.data?.[0]?.rowMetadata ?? {};
-  const columnMetadata = res.data.sheets?.[0]?.data?.[0]?.columnMetadata ?? {};
 
-  // if (rows.length < 2) return console.warn("No data found in sheet.");
+  const usernames = parseUsernames(rowData);
+  const dates = parseDates(rowData);
+  const userIds = await getOrInsertUserIds(usernames);
+  const logsToInsert = generateLogs(rowData, usernames, dates, userIds);
 
-  // const headers = rows[1];
-  // const dataRows = rows.slice(1);
-
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
-  const db = drizzle(pool, { schema });
-
-  // for (const cols of dataRows) {
-  // }
-
-  const usernames = rowData[1]?.values?.map((v,idx) => ({colIndex: idx, name: v.formattedValue})).filter((v) => v.name?.trim() !== ""  && v.name) ?? [];
-  const dates = rowData.map((row,idx) => ({rowIndex: idx, date: row.values?.[0]?.formattedValue})).filter((v) => v.date?.trim() !== ""  && v.date) ?? [];
-  console.log(usernames,dates);
-  // console.log(rowData[0]?.values?.[1]);
-
-  console.log(rowData[30]?.values?.[10]?.formattedValue);
-
-  console.log(rowData[30]?.values?.[10]?.effectiveFormat);
+  if (logsToInsert.length > 0) {
+    await updateLogs(logsToInsert);
+    console.log(`✅ Inserted ${logsToInsert.length} logs.`);
+  } else {
+    console.log("ℹ️ No logs to insert.");
+  }
 
   console.log("✅ Seeded data from Google Sheets");
-  await pool.end();
+  process.exit(0);
 }
 
 main().catch((e) => {
