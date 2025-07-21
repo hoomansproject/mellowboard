@@ -13,11 +13,9 @@ import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 export default function UserDetailsPage() {
-  const params = useParams();
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const userId = params.id as string;
-  const userRank = searchParams.get("rank")!;
+  const { userId } = useParams<{ userId: string }>();
+  const userRank = useSearchParams().get("rank")!;
 
   const [user] = api.leaderboard.getUserLogs.useSuspenseQuery({
     userId,

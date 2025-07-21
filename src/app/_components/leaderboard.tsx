@@ -8,14 +8,6 @@ import Image from "next/image";
 export function Leaderboard() {
   const [latestPost] = api.post.getLatest.useSuspenseQuery();
   const [leaderboard] = api.leaderboard.getLeaderboard.useSuspenseQuery();
-  // const utils = api.useUtils();
-  // const [name, setName] = useState("");
-  // const createPost = api.post.create.useMutation({
-  //   onSuccess: async () => {
-  //     await utils.post.invalidate();
-  //     setName("");
-  //   },
-  // });
 
   return (
     <div>
