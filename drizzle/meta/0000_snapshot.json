@@ -1,5 +1,5 @@
 {
-  "id": "44c3fa08-94ef-46ac-b7ca-8b601cffeeab",
+  "id": "3d28fc34-31e3-49b5-8be5-7bf6bfb89ef0",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -105,7 +105,16 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "mellowboard_logs_user_id_task_date_unique": {
+          "name": "mellowboard_logs_user_id_task_date_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "task_date"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -192,6 +201,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "github": {
+          "name": "github",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "freeze_card_count": {
           "name": "freeze_card_count",
           "type": "integer",
@@ -209,6 +224,13 @@
           "nullsNotDistinct": false,
           "columns": [
             "name"
+          ]
+        },
+        "mellowboard_users_github_unique": {
+          "name": "mellowboard_users_github_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "github"
           ]
         }
       },

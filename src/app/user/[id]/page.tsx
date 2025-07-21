@@ -1,5 +1,6 @@
 "use client";
 
+import { api } from "@/trpc/react";
 import {
   ArrowLeft,
   TrendingUp,
@@ -184,9 +185,14 @@ const pointLogs = [
 export default function UserDetailsPage() {
   const params = useParams();
   const router = useRouter();
-  const userId = params.id as string;
+  const userData = params.id as string;
 
-  const user = userData[userId as unknown as keyof typeof userData];
+  const userId = userData.slice(0, -1);
+  const userRank = parseInt(userData.at(-1) ?? "0") + 1;
+
+  const [user] = api.leaderboard.getUserLogs.useSuspenseQuery({
+    userId,
+  });
 
   if (!user) {
     return (
@@ -260,18 +266,27 @@ export default function UserDetailsPage() {
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
             <div className="relative h-16 w-16 flex-shrink-0 sm:h-20 sm:w-20">
               <Image
-                src={user.avatar || "/placeholder.svg"}
-                alt={user.name}
+                src={
+                  user.githubUsername
+                    ? `https://github.com/${user.githubUsername}.png`
+                    : "/placeholder.svg"
+                }
+                alt={user.username}
                 fill
                 className="h-16 w-16 rounded-full object-cover sm:h-20 sm:w-20"
+                onError={(e) => {
+                  e.currentTarget.src = "/placeholder.svg";
+                }}
               />
             </div>
 
             <div className="flex-1 text-center sm:text-left">
               <div className="mb-2 flex flex-col items-center gap-2 sm:flex-row sm:items-start sm:gap-3">
-                <h1 className="text-xl font-bold sm:text-2xl">{user.name}</h1>
+                <h1 className="text-xl font-bold sm:text-2xl">
+                  {user.username}
+                </h1>
                 <span className="inline-flex items-center rounded-full border border-gray-300 bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
-                  Rank #{user.rank}
+                  Rank #{userRank}
                 </span>
               </div>
               <p className="mb-3 text-sm text-gray-500 sm:text-base">
@@ -288,7 +303,7 @@ export default function UserDetailsPage() {
                 </div>
                 <div className="flex items-center justify-center gap-2 sm:justify-start">
                   <Activity className="h-4 w-4 text-orange-500" />
-                  <span className="font-semibold">{user.currentStreak}</span>
+                  <span className="font-semibold">{user.streak}</span>
                   <span className="text-gray-500">day streak</span>
                 </div>
               </div>

@@ -3,8 +3,6 @@ CREATE TABLE "mellowboard_cron_status" (
 	"status" varchar(100),
 	"created_at" timestamp DEFAULT now()
 );
-CREATE TYPE log_type AS ENUM ('meeting', 'task');
-CREATE TYPE log_status AS ENUM ('worked', 'not_available', 'no_task', 'freeze_card');
 --> statement-breakpoint
 CREATE TABLE "mellowboard_logs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
@@ -13,7 +11,8 @@ CREATE TABLE "mellowboard_logs" (
 	"status" "log_status" NOT NULL,
 	"points" integer NOT NULL,
 	"task_date" timestamp,
-	"created_at" timestamp DEFAULT now()
+	"created_at" timestamp DEFAULT now(),
+	CONSTRAINT "mellowboard_logs_user_id_task_date_unique" UNIQUE("user_id","task_date")
 );
 --> statement-breakpoint
 CREATE TABLE "mellowboard_post" (
@@ -26,8 +25,10 @@ CREATE TABLE "mellowboard_post" (
 CREATE TABLE "mellowboard_users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(100) NOT NULL,
+	"github" varchar(100),
 	"freeze_card_count" integer DEFAULT 0 NOT NULL,
-	CONSTRAINT "mellowboard_users_name_unique" UNIQUE("name")
+	CONSTRAINT "mellowboard_users_name_unique" UNIQUE("name"),
+	CONSTRAINT "mellowboard_users_github_unique" UNIQUE("github")
 );
 --> statement-breakpoint
 ALTER TABLE "mellowboard_logs" ADD CONSTRAINT "mellowboard_logs_user_id_mellowboard_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."mellowboard_users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

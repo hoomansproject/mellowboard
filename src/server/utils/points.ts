@@ -1,5 +1,6 @@
 import type { LogStatus } from "../db/enums/log";
 import { Color } from "./color";
+import { getUserStreak } from "./log-helpers";
 
 const STATUS_REGEX =
   /\[\s*(DONE|NO\s*TASK|NOT\s*AVAILABLE|FREEZE[-\s]?CARD|FC)\s*\]/i;
@@ -31,7 +32,22 @@ export function calculateSeedPoints(text: string, color: Color): number {
   return 0;
 }
 
-export function getSeedStatusFromTextAndColor(
+export async function calculateCronPoints(
+  userId: string,
+  text: string,
+  color: Color,
+): Promise<number> {
+  const streak = await getUserStreak(userId, 11);
+  const seedPoints = calculateSeedPoints(text, color);
+
+  if (streak > 10) return seedPoints * 4;
+  if (streak > 5) return seedPoints * 3;
+  if (streak > 0) return seedPoints * 2;
+
+  return seedPoints;
+}
+
+export function getStatusFromTextAndColor(
   text: string,
   color: Color,
 ): LogStatus {

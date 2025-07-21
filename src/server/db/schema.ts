@@ -37,6 +37,7 @@ export const users = createTable("users", {
     .primaryKey()
     .default(sql`gen_random_uuid()`),
   name: varchar("name", { length: 100 }).unique().notNull(),
+  github: varchar("github", { length: 100 }).unique(),
   freezeCardCount: integer("freeze_card_count").notNull().default(0),
 });
 

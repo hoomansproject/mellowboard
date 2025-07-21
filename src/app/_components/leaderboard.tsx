@@ -44,7 +44,6 @@ const leaderboardData = [
     avatar: "/placeholder.svg?height=40&width=40",
     points: 2847,
     streak: 23,
-    isCurrentUser: false,
   },
   {
     id: 2,
@@ -54,7 +53,6 @@ const leaderboardData = [
     avatar: "/placeholder.svg?height=40&width=40",
     points: 2654,
     streak: 18,
-    isCurrentUser: false,
   },
   {
     id: 3,
@@ -64,7 +62,6 @@ const leaderboardData = [
     avatar: "/placeholder.svg?height=40&width=40",
     points: 2431,
     streak: 15,
-    isCurrentUser: false,
   },
   {
     id: 4,
@@ -74,7 +71,6 @@ const leaderboardData = [
     avatar: "/placeholder.svg?height=40&width=40",
     points: 2298,
     streak: 12,
-    isCurrentUser: true,
   },
   {
     id: 5,
@@ -84,7 +80,6 @@ const leaderboardData = [
     avatar: "/placeholder.svg?height=40&width=40",
     points: 2156,
     streak: 9,
-    isCurrentUser: false,
   },
   {
     id: 6,
@@ -94,7 +89,6 @@ const leaderboardData = [
     avatar: "/placeholder.svg?height=40&width=40",
     points: 1987,
     streak: 7,
-    isCurrentUser: false,
   },
   {
     id: 7,
@@ -104,7 +98,6 @@ const leaderboardData = [
     avatar: "/placeholder.svg?height=40&width=40",
     points: 1834,
     streak: 5,
-    isCurrentUser: false,
   },
   {
     id: 8,
@@ -114,7 +107,6 @@ const leaderboardData = [
     avatar: "/placeholder.svg?height=40&width=40",
     points: 1672,
     streak: 4,
-    isCurrentUser: false,
   },
 ];
 
@@ -165,6 +157,7 @@ function getRankBadge(rank: number) {
 }
 
 export default function Component() {
+  const [leaderboard] = api.leaderboard.getLeaderboard.useSuspenseQuery();
   return (
     <div className="mx-auto w-full max-w-4xl space-y-4 p-2 sm:space-y-6 sm:p-4">
       <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -175,39 +168,42 @@ export default function Component() {
           </h2>
         </div>
         <div className="space-y-1 p-2 sm:space-y-2 sm:p-6">
-          {leaderboardData.map((user) => (
+          {leaderboard.map((user, idx) => (
             <button
-              key={user.id}
-              onClick={() => (window.location.href = `/user/${user.id}`)}
-              className={`flex w-full cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors sm:p-4 ${
-                user.isCurrentUser
-                  ? "border-blue-200 bg-blue-50 hover:bg-blue-100"
-                  : "border-gray-200 hover:bg-gray-50"
-              }`}
+              key={user.userId}
+              onClick={() =>
+                (window.location.href = `/user/${user.userId + idx}`)
+              }
+              className={`flex w-full cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors sm:p-4 ${"border-gray-200 hover:bg-gray-50"}`}
             >
               <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
                 <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
-                  {getRankIcon(user.rank)}
-                  <div className="hidden sm:block">
-                    {getRankBadge(user.rank)}
-                  </div>
+                  {getRankIcon(idx + 1)}
+                  <div className="hidden sm:block">{getRankBadge(idx + 1)}</div>
                 </div>
 
                 <div className="relative h-8 w-8 flex-shrink-0 sm:h-10 sm:w-10">
                   <Image
-                    src={user.avatar || "/placeholder.svg"}
-                    alt={user.name}
+                    src={
+                      user.githubUsername
+                        ? `https://github.com/${user.githubUsername}.png`
+                        : "/placeholder.svg"
+                    }
+                    alt={user.username}
                     fill
                     className="h-8 w-8 rounded-full object-cover sm:h-10 sm:w-10"
+                    onError={(e) => {
+                      e.currentTarget.src = "/placeholder.svg";
+                    }}
                   />
                 </div>
 
                 <div className="min-w-0 flex-1 text-left">
                   <div className="flex items-center gap-2">
                     <h3 className="truncate text-sm font-semibold sm:text-base">
-                      {user.name}
+                      {user.username}
                     </h3>
-                    <div className="sm:hidden">{getRankBadge(user.rank)}</div>
+                    <div className="sm:hidden">{getRankBadge(idx + 1)}</div>
                   </div>
                   <p className="hidden text-xs text-gray-500 sm:block">
                     {user.username}
@@ -219,7 +215,7 @@ export default function Component() {
                 <div className="flex items-center gap-1">
                   <Star className="h-3 w-3 text-yellow-500 sm:h-4 sm:w-4" />
                   <span className="font-semibold">
-                    {user.points.toLocaleString()}
+                    {user.totalPoints.toLocaleString()}
                   </span>
                   <span className="hidden text-gray-500 lg:inline">pts</span>
                 </div>

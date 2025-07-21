@@ -1,1 +1,0 @@
-ALTER TABLE "mellowboard_logs" ADD CONSTRAINT "mellowboard_logs_user_id_task_date_unique" UNIQUE("user_id","task_date");

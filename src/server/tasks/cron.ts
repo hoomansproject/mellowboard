@@ -21,25 +21,42 @@ export const runCronJob = async () => {
   const res = await sheets.spreadsheets.get({
     spreadsheetId: env.SHEET_ID,
     includeGridData: true,
-    ranges: ["Commit Box!A1:Z100"],
+    ranges: ["Commit Box!A1:Z100", "Github!A1:Z100", "Weekly StandUp!A1:Z100"],
   });
 
-  const rowData = res.data.sheets?.[0]?.data?.[0]?.rowData ?? [];
+  const TasksRowData = res.data.sheets?.[0]?.data?.[0]?.rowData ?? [];
 
-  const usernames = parseUsernames(rowData);
-  const dates = parseDates(rowData);
-  const userIds = await getOrInsertUserIds(usernames);
+  const MeetingRowData = res.data.sheets?.[2]?.data?.[0]?.rowData ?? [];
 
-  const logsToInsert = await generateCronLogs(
-    rowData,
+  const usernames = parseUsernames(TasksRowData, "row", 1);
+  const meetingUsernames = parseUsernames(MeetingRowData, "column", 0);
+
+  const meetingDates = parseDates(MeetingRowData, "row", 0);
+  const TaskDates = parseDates(TasksRowData, "column", 0);
+
+  const userIds = await getOrInsertUserIds(usernames.concat(meetingUsernames));
+
+  const taskLogsToInsert = await generateCronLogs(
+    TasksRowData,
     usernames,
-    dates,
+    TaskDates,
     userIds,
+    "task",
+  );
+  const meetingLogsToInsert = await generateCronLogs(
+    MeetingRowData,
+    meetingUsernames,
+    meetingDates,
+    userIds,
+    "meeting",
   );
 
-  if (logsToInsert.length > 0) {
-    const updatedLogs = await updateLogs(logsToInsert);
-    console.log(`✅ Inserted ${updatedLogs} logs.`);
+  if (taskLogsToInsert.length > 0) {
+    const updatedTaskLogs = await updateLogs(taskLogsToInsert);
+    const updatedMeetingLogs = await updateLogs(meetingLogsToInsert);
+    console.log(`✅ Inserted ${updatedTaskLogs} task logs.
+      ✅ Inserted ${updatedMeetingLogs} meeting logs.
+      `);
   } else {
     console.log("ℹ️ No logs to insert.");
   }

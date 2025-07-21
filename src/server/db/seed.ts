@@ -1,6 +1,7 @@
 import { google } from "googleapis";
 import { env } from "@/env";
 import {
+  buildNameUsernameMap,
   generateLogs,
   getOrInsertUserIds,
   parseDates,
@@ -21,19 +22,50 @@ async function main() {
   const res = await sheets.spreadsheets.get({
     spreadsheetId: env.SHEET_ID,
     includeGridData: true,
-    ranges: ["Commit Box!A1:Z100"],
+    ranges: ["Commit Box!A1:Z100", "Github!A1:Z100", "Weekly StandUp!A1:Z100"],
   });
 
-  const rowData = res.data.sheets?.[0]?.data?.[0]?.rowData ?? [];
+  const TasksRowData = res.data.sheets?.[0]?.data?.[0]?.rowData ?? [];
+  const GithubData = res.data.sheets?.[1]?.data?.[0]?.rowData ?? [];
+  const MeetingRowData = res.data.sheets?.[2]?.data?.[0]?.rowData ?? [];
 
-  const usernames = parseUsernames(rowData);
-  const dates = parseDates(rowData);
-  const userIds = await getOrInsertUserIds(usernames);
-  const logsToInsert = generateLogs(rowData, usernames, dates, userIds);
+  const usernames = parseUsernames(TasksRowData, "row", 1);
+  const meetingUsernames = parseUsernames(MeetingRowData, "column", 0);
 
-  if (logsToInsert.length > 0) {
-    await updateLogs(logsToInsert);
-    console.log(`✅ Inserted ${logsToInsert.length} logs.`);
+  const githubNames = parseUsernames(GithubData, "column", 0);
+  const githubUsernames = parseUsernames(GithubData, "column", 1);
+
+  const usernameMap = buildNameUsernameMap(githubNames, githubUsernames);
+
+  const meetingDates = parseDates(MeetingRowData, "row", 0);
+  const TaskDates = parseDates(TasksRowData, "column", 0);
+
+  const userIds = await getOrInsertUserIds(
+    usernames.concat(meetingUsernames),
+    usernameMap,
+  );
+
+  const taskLogsToInsert = generateLogs(
+    TasksRowData,
+    usernames,
+    TaskDates,
+    userIds,
+    "task",
+  );
+  const meetingLogsToInsert = generateLogs(
+    MeetingRowData,
+    meetingUsernames,
+    meetingDates,
+    userIds,
+    "meeting",
+  );
+
+  if (taskLogsToInsert.length > 0) {
+    const updatedTaskLogs = await updateLogs(taskLogsToInsert);
+    const updatedMeetingLogs = await updateLogs(meetingLogsToInsert);
+    console.log(`✅ Inserted ${updatedTaskLogs} task logs.
+      ✅ Inserted ${updatedMeetingLogs} meeting logs.
+      `);
   } else {
     console.log("ℹ️ No logs to insert.");
   }
