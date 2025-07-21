@@ -172,7 +172,7 @@ export default function Component() {
             <button
               key={user.userId}
               onClick={() =>
-                (window.location.href = `/user/${user.userId + idx}`)
+                (window.location.href = `/user/${user.userId}?rank=${idx + 1}`)
               }
               className={`flex w-full cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors sm:p-4 ${"border-gray-200 hover:bg-gray-50"}`}
             >
@@ -192,6 +192,8 @@ export default function Component() {
                     alt={user.username}
                     fill
                     className="h-8 w-8 rounded-full object-cover sm:h-10 sm:w-10"
+                    priority
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     onError={(e) => {
                       e.currentTarget.src = "/placeholder.svg";
                     }}

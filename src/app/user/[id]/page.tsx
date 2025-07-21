@@ -10,7 +10,7 @@ import {
   Activity,
 } from "lucide-react";
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 // Mock user data - in a real app, this would come from an API
 const userData = {
@@ -184,11 +184,10 @@ const pointLogs = [
 
 export default function UserDetailsPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const userData = params.id as string;
-
-  const userId = userData.slice(0, -1);
-  const userRank = parseInt(userData.at(-1) ?? "0") + 1;
+  const userId = params.id as string;
+  const userRank = searchParams.get("rank")!;
 
   const [user] = api.leaderboard.getUserLogs.useSuspenseQuery({
     userId,
@@ -273,6 +272,8 @@ export default function UserDetailsPage() {
                 }
                 alt={user.username}
                 fill
+                priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="h-16 w-16 rounded-full object-cover sm:h-20 sm:w-20"
                 onError={(e) => {
                   e.currentTarget.src = "/placeholder.svg";
