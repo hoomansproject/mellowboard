@@ -12,176 +12,6 @@ import {
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 
-// Mock user data - in a real app, this would come from an API
-const userData = {
-  1: {
-    id: 1,
-    name: "Alex Chen",
-    username: "@alexc",
-    avatar: "/placeholder.svg?height=80&width=80",
-    totalPoints: 2847,
-    currentStreak: 23,
-    rank: 1,
-  },
-  2: {
-    id: 2,
-    name: "Sarah Johnson",
-    username: "@sarahj",
-    avatar: "/placeholder.svg?height=80&width=80",
-    totalPoints: 2654,
-    currentStreak: 18,
-    rank: 2,
-  },
-  3: {
-    id: 3,
-    name: "Mike Rodriguez",
-    username: "@miker",
-    avatar: "/placeholder.svg?height=80&width=80",
-    totalPoints: 2431,
-    currentStreak: 15,
-    rank: 3,
-  },
-  4: {
-    id: 4,
-    name: "Emma Wilson",
-    username: "@emmaw",
-    avatar: "/placeholder.svg?height=80&width=80",
-    totalPoints: 2298,
-    currentStreak: 12,
-    rank: 4,
-  },
-  5: {
-    id: 5,
-    name: "David Kim",
-    username: "@davidk",
-    avatar: "/placeholder.svg?height=80&width=80",
-    totalPoints: 2156,
-    currentStreak: 9,
-    rank: 5,
-  },
-  6: {
-    id: 6,
-    name: "Lisa Thompson",
-    username: "@lisat",
-    avatar: "/placeholder.svg?height=80&width=80",
-    totalPoints: 1987,
-    currentStreak: 7,
-    rank: 6,
-  },
-  7: {
-    id: 7,
-    name: "James Brown",
-    username: "@jamesb",
-    avatar: "/placeholder.svg?height=80&width=80",
-    totalPoints: 1834,
-    currentStreak: 5,
-    rank: 7,
-  },
-  8: {
-    id: 8,
-    name: "Anna Garcia",
-    username: "@annag",
-    avatar: "/placeholder.svg?height=80&width=80",
-    totalPoints: 1672,
-    currentStreak: 4,
-    rank: 8,
-  },
-};
-
-// Mock point logs data
-const pointLogs = [
-  {
-    id: 1,
-    date: "2024-01-20",
-    time: "14:30",
-    activity: "Daily Challenge Completed",
-    points: 50,
-    type: "earned",
-    runningTotal: 2847,
-  },
-  {
-    id: 2,
-    date: "2024-01-20",
-    time: "09:15",
-    activity: "Quiz Perfect Score",
-    points: 100,
-    type: "earned",
-    runningTotal: 2797,
-  },
-  {
-    id: 3,
-    date: "2024-01-19",
-    time: "16:45",
-    activity: "Streak Bonus",
-    points: 25,
-    type: "earned",
-    runningTotal: 2697,
-  },
-  {
-    id: 4,
-    date: "2024-01-19",
-    time: "11:20",
-    activity: "Task Completion",
-    points: 75,
-    type: "earned",
-    runningTotal: 2672,
-  },
-  {
-    id: 5,
-    date: "2024-01-18",
-    time: "20:10",
-    activity: "Late Submission Penalty",
-    points: 10,
-    type: "lost",
-    runningTotal: 2597,
-  },
-  {
-    id: 6,
-    date: "2024-01-18",
-    time: "13:30",
-    activity: "Weekly Goal Achieved",
-    points: 200,
-    type: "earned",
-    runningTotal: 2607,
-  },
-  {
-    id: 7,
-    date: "2024-01-17",
-    time: "15:45",
-    activity: "Collaboration Bonus",
-    points: 30,
-    type: "earned",
-    runningTotal: 2407,
-  },
-  {
-    id: 8,
-    date: "2024-01-17",
-    time: "10:00",
-    activity: "Morning Challenge",
-    points: 40,
-    type: "earned",
-    runningTotal: 2377,
-  },
-  {
-    id: 9,
-    date: "2024-01-16",
-    time: "18:20",
-    activity: "Achievement Unlocked",
-    points: 150,
-    type: "earned",
-    runningTotal: 2337,
-  },
-  {
-    id: 10,
-    date: "2024-01-16",
-    time: "12:15",
-    activity: "Daily Login Bonus",
-    points: 10,
-    type: "earned",
-    runningTotal: 2187,
-  },
-];
-
 export default function UserDetailsPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -233,17 +63,27 @@ export default function UserDetailsPage() {
       day: "numeric",
     });
   };
-
-  const groupLogsByDate = (logs: typeof pointLogs) => {
-    const grouped: Record<string, typeof pointLogs> = {};
-    logs.forEach((log) => {
-      grouped[log.date] ??= [];
-      grouped[log.date]?.push(log);
-    });
-    return grouped;
+  type Log = {
+    id: string;
+    type: "meeting" | "task";
+    status: "worked" | "not_available" | "no_task" | "freeze_card";
+    points: number;
+    taskDate: Date | null;
+    createdAt: Date | null;
   };
+  function groupLogsByDate(logs: Log[]): Record<string, Log[]> {
+    return logs.reduce<Record<string, Log[]>>((acc, log) => {
+      const d = log.taskDate;
+      if (!(d instanceof Date) || isNaN(d.getTime())) return acc;
 
-  const groupedLogs = groupLogsByDate(pointLogs);
+      const key = d.toISOString().slice(0, 10); // “2025-07-21”
+      acc[key] ??= [];
+      acc[key].push(log);
+      return acc;
+    }, {});
+  }
+
+  const groupedLogs = groupLogsByDate(user.logs);
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-4 p-2 sm:space-y-6 sm:p-4">
@@ -291,7 +131,18 @@ export default function UserDetailsPage() {
                 </span>
               </div>
               <p className="mb-3 text-sm text-gray-500 sm:text-base">
-                {user.username}
+                {user.githubUsername ? (
+                  <a
+                    href={`https://github.com/${user.githubUsername}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-blue-500"
+                  >
+                    @{user.githubUsername}
+                  </a>
+                ) : (
+                  "No GitHub username found"
+                )}
               </p>
 
               <div className="flex flex-col gap-4 text-sm sm:flex-row sm:gap-6">
@@ -327,7 +178,7 @@ export default function UserDetailsPage() {
             .map(([date, logs]) => {
               const dayTotal = logs.reduce(
                 (sum, log) =>
-                  sum + (log.type === "earned" ? log.points : -log.points),
+                  sum + (log.type === "task" ? log.points : -log.points),
                 0,
               );
               const mainActivity =
@@ -379,7 +230,7 @@ export default function UserDetailsPage() {
 
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">
-                          {mainActivity?.activity}
+                          {mainActivity?.type}
                         </p>
                         {logs.length > 1 && (
                           <p className="text-xs text-gray-500">
@@ -388,7 +239,7 @@ export default function UserDetailsPage() {
                           </p>
                         )}
                         <p className="hidden text-xs text-gray-500 sm:block">
-                          {mainActivity?.time}
+                          {mainActivity?.taskDate?.toLocaleString()}
                         </p>
                       </div>
                     </div>
@@ -411,7 +262,7 @@ export default function UserDetailsPage() {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">
-                        Total: {mainActivity?.runningTotal.toLocaleString()}
+                        Total: {mainActivity?.points}
                       </p>
                     </div>
                   </div>

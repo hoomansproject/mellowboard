@@ -35,81 +35,6 @@ export function Leaderboard() {
   );
 }
 
-const leaderboardData = [
-  {
-    id: 1,
-    rank: 1,
-    name: "Alex Chen",
-    username: "@alexc",
-    avatar: "/placeholder.svg?height=40&width=40",
-    points: 2847,
-    streak: 23,
-  },
-  {
-    id: 2,
-    rank: 2,
-    name: "Sarah Johnson",
-    username: "@sarahj",
-    avatar: "/placeholder.svg?height=40&width=40",
-    points: 2654,
-    streak: 18,
-  },
-  {
-    id: 3,
-    rank: 3,
-    name: "Mike Rodriguez",
-    username: "@miker",
-    avatar: "/placeholder.svg?height=40&width=40",
-    points: 2431,
-    streak: 15,
-  },
-  {
-    id: 4,
-    rank: 4,
-    name: "Emma Wilson",
-    username: "@emmaw",
-    avatar: "/placeholder.svg?height=40&width=40",
-    points: 2298,
-    streak: 12,
-  },
-  {
-    id: 5,
-    rank: 5,
-    name: "David Kim",
-    username: "@davidk",
-    avatar: "/placeholder.svg?height=40&width=40",
-    points: 2156,
-    streak: 9,
-  },
-  {
-    id: 6,
-    rank: 6,
-    name: "Lisa Thompson",
-    username: "@lisat",
-    avatar: "/placeholder.svg?height=40&width=40",
-    points: 1987,
-    streak: 7,
-  },
-  {
-    id: 7,
-    rank: 7,
-    name: "James Brown",
-    username: "@jamesb",
-    avatar: "/placeholder.svg?height=40&width=40",
-    points: 1834,
-    streak: 5,
-  },
-  {
-    id: 8,
-    rank: 8,
-    name: "Anna Garcia",
-    username: "@annag",
-    avatar: "/placeholder.svg?height=40&width=40",
-    points: 1672,
-    streak: 4,
-  },
-];
-
 function getRankIcon(rank: number) {
   switch (rank) {
     case 1:
@@ -208,7 +133,7 @@ export default function Component() {
                     <div className="sm:hidden">{getRankBadge(idx + 1)}</div>
                   </div>
                   <p className="hidden text-xs text-gray-500 sm:block">
-                    {user.username}
+                    {user.githubUsername && "@" + user.githubUsername}
                   </p>
                 </div>
               </div>
