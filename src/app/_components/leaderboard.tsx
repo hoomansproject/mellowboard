@@ -5,28 +5,6 @@ import { api } from "@/trpc/react";
 import { Trophy, Flame, Star, Medal, Award } from "lucide-react";
 import Image from "next/image";
 
-export function Leaderboard() {
-  const [latestPost] = api.post.getLatest.useSuspenseQuery();
-  const [leaderboard] = api.leaderboard.getLeaderboard.useSuspenseQuery();
-
-  return (
-    <div>
-      <h2 className="text-2xl font-bold">Latest Post</h2>
-      <p>{latestPost?.name}</p>
-
-      <h2 className="mt-4 text-2xl font-bold">Leaderboard</h2>
-      <ul className="mt-4 flex flex-col gap-2">
-        {leaderboard?.map((user) => (
-          <li key={user.userId} className="flex items-center gap-4">
-            <span className="text-lg font-medium">{user.username}</span>
-            <span className="text-lg font-medium">{user.totalPoints}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 function getRankIcon(rank: number) {
   switch (rank) {
     case 1:
