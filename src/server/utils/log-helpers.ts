@@ -175,6 +175,7 @@ export async function getUserStreak(
     .from(logs)
     .where(
       and(
+        eq(logs.type, "task"),
         eq(logs.userId, userId),
         inArray(logs.status, ["worked", "freeze_card", "no_task"]),
         isNotNull(logs.taskDate),
@@ -250,9 +251,11 @@ export function generateLogs(
       }
     }
   if (type === "meeting") {
+    console.log(dates);
+    console.log(usernames);
     for (const d of dates) {
       for (const u of usernames) {
-        const cell = rowData[d.index]?.values?.[u.index];
+        const cell = rowData[u.index]?.values?.[d.index];
         const value = cell?.formattedValue ?? "";
         const userId = userIds.get(u.name);
 
@@ -352,7 +355,7 @@ export async function generateCronLogs(
   if (type === "meeting") {
     for (const d of dates) {
       for (const u of usernames) {
-        const cell = rowData[d.index]?.values?.[u.index];
+        const cell = rowData[u.index]?.values?.[d.index];
         const value = cell?.formattedValue ?? "";
         const userId = userIds.get(u.name);
 

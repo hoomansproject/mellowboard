@@ -64,8 +64,59 @@ export default function UserDetailsPage() {
   }
 
   const groupedLogs = groupLogsByDate(user?.logs ?? []);
+  const getStatusDisplay = (status: Log["status"]) => {
+    switch (status) {
+      case "worked":
+        return {
+          label: "Worked",
+          color: "text-green-600",
+          bgColor: "bg-green-100",
+        };
+      case "not_available":
+        return {
+          label: "Not Available",
+          color: "text-red-600",
+          bgColor: "bg-red-100",
+        };
+      case "no_task":
+        return {
+          label: "No Task",
+          color: "text-gray-600",
+          bgColor: "bg-gray-100",
+        };
+      case "freeze_card":
+        return {
+          label: "Freeze Card",
+          color: "text-blue-600",
+          bgColor: "bg-blue-100",
+        };
+      default:
+        return {
+          label: status,
+          color: "text-gray-600",
+          bgColor: "bg-gray-100",
+        };
+    }
+  };
 
-  console.log(groupedLogs);
+  const getDisplayText = (type: Log["type"], status: Log["status"]) => {
+    if (type === "meeting") {
+      return status === "worked"
+        ? "Meeting Attended"
+        : status === "no_task"
+          ? "Not Attended But Informed"
+          : "Not Available";
+    }
+    if (type === "task") {
+      return status === "worked"
+        ? "Work Done"
+        : status === "no_task"
+          ? "No Task"
+          : status === "freeze_card"
+            ? "Freeze Card"
+            : "Not Available";
+    }
+  };
 
   if (isLoading) {
     return (
@@ -92,7 +143,7 @@ export default function UserDetailsPage() {
             </p>
             <button
               onClick={() => router.push("/")}
-              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none sm:px-4"
+              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none sm:px-4"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Leaderboard
@@ -109,7 +160,7 @@ export default function UserDetailsPage() {
       <div className="mb-4 flex items-center gap-4 sm:mb-6">
         <button
           onClick={() => router.push("/")}
-          className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+          className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none"
         >
           <ArrowLeft className="mr-1 h-4 w-4 sm:mr-2" />
           <span className="hidden sm:inline">Back to Leaderboard</span>
@@ -190,107 +241,96 @@ export default function UserDetailsPage() {
             Daily Activity
           </h2>
         </div>
-        <div className="space-y-2 p-2 sm:space-y-3 sm:p-6">
+        <div className="space-y-4 p-2 sm:space-y-6 sm:p-6">
           {Object.entries(groupedLogs)
             .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
-            .map(([date, logs]) => {
-              const dayTotal = logs.reduce(
-                (sum, log) =>
-                  sum + (log.type === "task" ? log.points : -log.points),
-                0,
-              );
-              const mainActivity =
-                logs.find(
-                  (log) =>
-                    log.points === Math.max(...logs.map((l) => l.points)),
-                ) ?? logs[0];
-
-              return (
-                <div
-                  key={date}
-                  className="flex flex-row justify-between gap-3 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 sm:flex-row sm:items-center sm:gap-4 sm:p-4"
-                >
-                  <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
-                    <div className="min-w-[50px] flex-shrink-0 text-center sm:min-w-[60px]">
-                      <p className="text-xs font-semibold sm:text-sm">
-                        <span className="sm:hidden">
-                          {formatDateMobile(date)}
-                        </span>
-                        <span className="hidden sm:inline">
-                          {formatDate(date).split(",")[0]}
-                        </span>
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {new Date(date).toLocaleDateString("en-US", {
-                          weekday: "short",
-                        })}
-                      </p>
-                    </div>
-
-                    <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-                      <div
-                        className={`flex-shrink-0 rounded-full p-1.5 sm:p-2 ${
-                          dayTotal > 0
-                            ? "bg-green-100 text-green-600"
-                            : dayTotal < 0
-                              ? "bg-red-100 text-red-600"
-                              : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
-                        {dayTotal > 0 ? (
-                          <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-                        ) : dayTotal < 0 ? (
-                          <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
-                        ) : (
-                          <Activity className="h-3 w-3 sm:h-4 sm:w-4" />
-                        )}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {mainActivity?.status
-                            .split("_")
-                            .join(" ")
-                            .replace(/\b\w/g, (c) => c.toUpperCase())}
-                        </p>
-                        {logs.length > 1 && (
-                          <p className="text-xs text-gray-500">
-                            +{logs.length - 1} more{" "}
-                            {logs.length === 2 ? "activity" : "activities"}
-                          </p>
-                        )}
-                        <p className="hidden text-xs text-gray-500 sm:block">
-                          Recorded At:{" "}
-                          {mainActivity?.createdAt?.toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col justify-between text-right sm:block sm:text-right">
-                    <div>
-                      <p
-                        className={`text-base font-bold sm:text-lg ${
-                          dayTotal > 0
-                            ? "text-green-600"
-                            : dayTotal < 0
-                              ? "text-red-600"
-                              : "text-gray-600"
-                        }`}
-                      >
-                        {dayTotal > 0 ? "+" : ""}
-                        {dayTotal}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">
-                        Total: {mainActivity?.points}
-                      </p>
-                    </div>
-                  </div>
+            .map(([date, logs]) => (
+              <div key={date} className="space-y-2 sm:space-y-3">
+                {/* Date Header */}
+                <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+                  <h3 className="text-sm font-semibold sm:text-base">
+                    <span className="sm:hidden">{formatDateMobile(date)}</span>
+                    <span className="hidden sm:inline">{formatDate(date)}</span>
+                  </h3>
+                  <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800">
+                    {logs.length}{" "}
+                    {logs.length === 1 ? "activity" : "activities"}
+                  </span>
                 </div>
-              );
-            })}
+
+                {/* Individual Logs */}
+                <div className="space-y-2">
+                  {logs
+                    .sort((a, b) => {
+                      const timeA = a.createdAt
+                        ? new Date(a.createdAt).getTime()
+                        : 0;
+                      const timeB = b.createdAt
+                        ? new Date(b.createdAt).getTime()
+                        : 0;
+                      return timeB - timeA;
+                    })
+                    .map((log) => {
+                      const statusInfo = getStatusDisplay(log.status);
+
+                      return (
+                        <div
+                          key={log.id}
+                          className="flex flex-row justify-between gap-2 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 sm:flex-row sm:items-center sm:gap-4"
+                        >
+                          <div className="flex min-w-0 flex-1 items-center gap-3">
+                            <div
+                              className={`flex-shrink-0 rounded-full p-1.5 ${
+                                log.points > 0
+                                  ? "bg-green-100 text-green-600"
+                                  : log.points < 0
+                                    ? "bg-red-100 text-red-600"
+                                    : "bg-gray-100 text-gray-600"
+                              }`}
+                            >
+                              {log.points > 0 ? (
+                                <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                              ) : log.points < 0 ? (
+                                <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
+                              ) : (
+                                <Activity className="h-3 w-3 sm:h-4 sm:w-4" />
+                              )}
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                                <p className="text-sm font-medium">
+                                  {getDisplayText(log.type, log.status)}
+                                </p>
+                                <span
+                                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusInfo.bgColor} ${statusInfo.color}`}
+                                >
+                                  {statusInfo.label}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex justify-between text-right sm:block">
+                            <p
+                              className={`text-base font-bold ${
+                                log.points > 0
+                                  ? "text-green-600"
+                                  : log.points < 0
+                                    ? "text-red-600"
+                                    : "text-gray-600"
+                              }`}
+                            >
+                              {log.points > 0 ? "+" : ""}
+                              {log.points}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            ))}
         </div>
       </div>
     </div>
