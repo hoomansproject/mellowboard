@@ -1,4 +1,4 @@
-import type { LogStatus } from "../db/enums/log";
+import type { LogStatus, LogType } from "../db/enums/log";
 import { Color } from "./color";
 import { getUserStreak } from "./log-helpers";
 
@@ -47,13 +47,26 @@ export async function calculateCronPoints(
   return seedPoints;
 }
 
+export function calculateMeetingPoints(text: LogStatus): number {
+  if (text === "worked") return 5;
+  if (text === "no_task") return 1;
+  return -6;
+}
+
 export function getStatusFromTextAndColor(
   text: string,
   color: Color,
+  type?: LogType,
 ): LogStatus {
   const normalizedText = text.trim();
   const match = STATUS_REGEX.exec(normalizedText);
   const status = match?.[1]?.replace(/\s+/g, " ").toUpperCase();
+
+  if (type == "meeting") {
+    if (status == "ATTENDED") return "worked";
+    if (status == "NO BUT INFORMED") return "no_task";
+    return "not_available";
+  }
 
   if (status === "FREEZE CARD" || status === "FC" || status === "FREEZE-CARD")
     return "freeze_card";
