@@ -1,6 +1,7 @@
 import { google } from "googleapis";
 import { env } from "@/env";
 import {
+  buildNameUsernameMap,
   generateCronLogs,
   getOrInsertUserIds,
   parseDates,
@@ -25,16 +26,24 @@ export const runCronJob = async () => {
   });
 
   const TasksRowData = res.data.sheets?.[0]?.data?.[0]?.rowData ?? [];
-
+  const GithubData = res.data.sheets?.[1]?.data?.[0]?.rowData ?? [];
   const MeetingRowData = res.data.sheets?.[2]?.data?.[0]?.rowData ?? [];
 
   const usernames = parseUsernames(TasksRowData, "row", 1);
   const meetingUsernames = parseUsernames(MeetingRowData, "column", 0);
 
+  const githubNames = parseUsernames(GithubData, "column", 0);
+  const githubUsernames = parseUsernames(GithubData, "column", 1);
+
+  const usernameMap = buildNameUsernameMap(githubNames, githubUsernames);
+
   const meetingDates = parseDates(MeetingRowData, "row", 0);
   const TaskDates = parseDates(TasksRowData, "column", 0);
 
-  const userIds = await getOrInsertUserIds(usernames.concat(meetingUsernames));
+  const userIds = await getOrInsertUserIds(
+    usernames.concat(meetingUsernames),
+    usernameMap,
+  );
 
   const taskLogsToInsert = await generateCronLogs(
     TasksRowData,
