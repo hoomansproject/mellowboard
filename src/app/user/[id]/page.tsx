@@ -63,7 +63,7 @@ export default function UserDetailsPage() {
     return (
       <div className="flex h-screen items-center justify-center">
         <div
-          className="h-8 w-8 animate-spin rounded-full border-4 border-t-2 border-blue-500"
+          className="h-8 w-8 animate-spin rounded-full border-4 border-t-2 border-gray-500"
           role="status"
           aria-label="Loading"
         />
