@@ -52,6 +52,7 @@ async function main() {
     userIds,
     "task",
   );
+
   const meetingLogsToInsert = generateLogs(
     MeetingRowData,
     meetingUsernames,

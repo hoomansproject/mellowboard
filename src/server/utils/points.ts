@@ -63,8 +63,9 @@ export function getStatusFromTextAndColor(
   const status = match?.[1]?.replace(/\s+/g, " ").toUpperCase();
 
   if (type == "meeting") {
-    if (status == "ATTENDED") return "worked";
-    if (status == "NO BUT INFORMED") return "no_task";
+    const MeetSatus = normalizedText.toUpperCase();
+    if (MeetSatus == "ATTENDED") return "worked";
+    if (MeetSatus == "NO BUT INFORMED") return "no_task";
     return "not_available";
   }
 
