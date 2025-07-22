@@ -4,6 +4,7 @@ import { api } from "@/trpc/react";
 
 import { Trophy, Flame, Star, Medal, Award } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 function getRankIcon(rank: number) {
   switch (rank) {
@@ -52,7 +53,23 @@ function getRankBadge(rank: number) {
 }
 
 export default function Component() {
-  const [leaderboard] = api.leaderboard.getLeaderboard.useSuspenseQuery();
+  const { data: leaderboard, isLoading } =
+    api.leaderboard.getLeaderboard.useQuery();
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto w-full max-w-4xl p-2 sm:p-4">
+        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="p-6 text-center sm:p-8">
+            <h2 className="mb-2 text-lg font-semibold sm:text-xl">
+              Loading leaderboard...
+            </h2>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto w-full max-w-4xl space-y-4 p-2 sm:space-y-6 sm:p-4">
       <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -63,12 +80,10 @@ export default function Component() {
           </h2>
         </div>
         <div className="space-y-1 p-2 sm:space-y-2 sm:p-6">
-          {leaderboard.map((user, idx) => (
-            <button
+          {leaderboard?.map((user, idx) => (
+            <Link
               key={user.userId}
-              onClick={() =>
-                (window.location.href = `/user/${user.userId}?rank=${idx + 1}`)
-              }
+              href={`/user/${user.userId}?rank=${idx + 1}`}
               className={`flex w-full cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors sm:p-4 ${"border-gray-200 hover:bg-gray-50"}`}
             >
               <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
@@ -125,7 +140,7 @@ export default function Component() {
                   </span>
                 </div>
               </div>
-            </button>
+            </Link>
           ))}
         </div>
       </div>

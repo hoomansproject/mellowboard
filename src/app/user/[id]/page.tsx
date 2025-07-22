@@ -14,36 +14,12 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 export default function UserDetailsPage() {
   const router = useRouter();
-  const { userId } = useParams<{ userId: string }>();
+  const { id } = useParams<{ id: string }>();
   const userRank = useSearchParams().get("rank")!;
 
-  const [user] = api.leaderboard.getUserLogs.useSuspenseQuery({
-    userId,
+  const { data: user, isLoading } = api.leaderboard.getUserLogs.useQuery({
+    userId: id,
   });
-
-  if (!user) {
-    return (
-      <div className="mx-auto w-full max-w-4xl p-2 sm:p-4">
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="p-6 text-center sm:p-8">
-            <h2 className="mb-2 text-lg font-semibold sm:text-xl">
-              User not found
-            </h2>
-            <p className="mb-4 text-sm text-gray-500 sm:text-base">
-              The user you&apos;re looking for doesn&apos;t exist.
-            </p>
-            <button
-              onClick={() => router.push("/")}
-              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none sm:px-4"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Leaderboard
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -81,7 +57,43 @@ export default function UserDetailsPage() {
     }, {});
   }
 
-  const groupedLogs = groupLogsByDate(user.logs);
+  const groupedLogs = groupLogsByDate(user?.logs ?? []);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div
+          className="h-8 w-8 animate-spin rounded-full border-4 border-t-2 border-blue-500"
+          role="status"
+          aria-label="Loading"
+        />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="mx-auto w-full max-w-4xl p-2 sm:p-4">
+        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="p-6 text-center sm:p-8">
+            <h2 className="mb-2 text-lg font-semibold sm:text-xl">
+              User not found
+            </h2>
+            <p className="mb-4 text-sm text-gray-500 sm:text-base">
+              The user you&apos;re looking for doesn&apos;t exist.
+            </p>
+            <button
+              onClick={() => router.push("/")}
+              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none sm:px-4"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Leaderboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-4 p-2 sm:space-y-6 sm:p-4">
