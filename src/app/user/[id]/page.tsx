@@ -50,14 +50,22 @@ export default function UserDetailsPage() {
       const d = log.taskDate;
       if (!(d instanceof Date) || isNaN(d.getTime())) return acc;
 
-      const key = d.toISOString().slice(0, 10); // “2025-07-21”
+      // Construct a local date key in YYYY-MM-DD format
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+      const day = String(d.getDate()).padStart(2, "0");
+      const key = `${year}-${month}-${day}`;
+
       acc[key] ??= [];
       acc[key].push(log);
+
       return acc;
     }, {});
   }
 
   const groupedLogs = groupLogsByDate(user?.logs ?? []);
+
+  console.log(groupedLogs);
 
   if (isLoading) {
     return (
@@ -252,7 +260,8 @@ export default function UserDetailsPage() {
                           </p>
                         )}
                         <p className="hidden text-xs text-gray-500 sm:block">
-                          {mainActivity?.taskDate?.toLocaleString()}
+                          Recorded At:{" "}
+                          {mainActivity?.createdAt?.toLocaleDateString()}
                         </p>
                       </div>
                     </div>
