@@ -251,8 +251,6 @@ export function generateLogs(
       }
     }
   if (type === "meeting") {
-    console.log(dates);
-    console.log(usernames);
     for (const d of dates) {
       for (const u of usernames) {
         const cell = rowData[u.index]?.values?.[d.index];
