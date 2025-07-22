@@ -5,6 +5,7 @@ import { logs } from "../db/schema";
 import { eq, sql, and, desc, inArray, isNotNull } from "drizzle-orm";
 import {
   calculateCronPoints,
+  calculateMeetingPoints,
   calculateSeedPoints,
   getStatusFromTextAndColor,
 } from "./points";
@@ -100,7 +101,8 @@ export function parseDates(
         (v): v is { index: number; date: string } =>
           typeof v.date === "string" &&
           v.date.trim() !== "" &&
-          new Date(v.date).getTime() <= Date.now(),
+          new Date(v.date).setHours(0, 0, 0, 0) <
+            new Date().setHours(0, 0, 0, 0),
       );
 
   return (row[orientationIndex]?.values ?? [])
@@ -112,7 +114,7 @@ export function parseDates(
     })
     .filter(
       (v): v is { index: number; date: string } =>
-        v !== null && new Date(v.date).getTime() <= Date.now(),
+        v !== null && new Date(v.date).getTime() < Date.now(),
     );
 }
 
@@ -248,6 +250,29 @@ export function generateLogs(
       }
     }
   if (type === "meeting") {
+    for (const d of dates) {
+      for (const u of usernames) {
+        const cell = rowData[d.index]?.values?.[u.index];
+        const value = cell?.formattedValue ?? "";
+        const userId = userIds.get(u.name);
+
+        if (!userId) continue;
+        if (value.trim() === "") continue;
+
+        const status = getStatusFromTextAndColor(
+          value,
+          Color.Transparent,
+          "meeting",
+        );
+        logsToInsert.push({
+          userId,
+          type: "meeting",
+          status: status,
+          points: calculateMeetingPoints(status),
+          taskDate: new Date(d.date),
+        });
+      }
+    }
   }
   return logsToInsert;
 }
@@ -325,6 +350,29 @@ export async function generateCronLogs(
   }
 
   if (type === "meeting") {
+    for (const d of dates) {
+      for (const u of usernames) {
+        const cell = rowData[d.index]?.values?.[u.index];
+        const value = cell?.formattedValue ?? "";
+        const userId = userIds.get(u.name);
+
+        if (!userId) continue;
+        if (value.trim() === "") continue;
+
+        const status = getStatusFromTextAndColor(
+          value,
+          Color.Transparent,
+          "meeting",
+        );
+        logsToInsert.push({
+          userId,
+          type: "meeting",
+          status: status,
+          points: calculateMeetingPoints(status),
+          taskDate: new Date(d.date),
+        });
+      }
+    }
   }
 
   return logsToInsert;
