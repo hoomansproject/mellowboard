@@ -200,7 +200,7 @@ export default function UserDetailsPage() {
               return (
                 <div
                   key={date}
-                  className="flex flex-col justify-between gap-3 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 sm:flex-row sm:items-center sm:gap-4 sm:p-4"
+                  className="flex flex-row justify-between gap-3 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 sm:flex-row sm:items-center sm:gap-4 sm:p-4"
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
                     <div className="min-w-[50px] flex-shrink-0 text-center sm:min-w-[60px]">
@@ -240,7 +240,10 @@ export default function UserDetailsPage() {
 
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">
-                          {mainActivity?.type}
+                          {mainActivity?.status
+                            .split("_")
+                            .join(" ")
+                            .replace(/\b\w/g, (c) => c.toUpperCase())}
                         </p>
                         {logs.length > 1 && (
                           <p className="text-xs text-gray-500">
@@ -255,7 +258,7 @@ export default function UserDetailsPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-between text-right sm:block sm:text-right">
+                  <div className="flex flex-col justify-between text-right sm:block sm:text-right">
                     <div>
                       <p
                         className={`text-base font-bold sm:text-lg ${
