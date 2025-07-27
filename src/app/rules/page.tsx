@@ -181,6 +181,268 @@ export default function RulesPage() {
                 <p className="text-xs text-red-600">Streak broken</p>
               </div>
             </div>
+
+            <div className="flex flex-col justify-between gap-2 rounded-lg border border-blue-200 bg-blue-50 p-4 sm:flex-row sm:items-center">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-blue-100 p-2 text-blue-600">
+                  <div className="flex h-5 w-5 items-center justify-center">
+                    <span className="text-xs font-bold">🛡️</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="font-semibold text-blue-800">
+                    Freeze Card Used
+                  </p>
+                  <p className="text-sm text-blue-700">
+                    Protected day using earned freeze card
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-lg font-bold text-blue-600">
+                  0 points
+                </span>
+                <p className="text-xs text-blue-600">Streak protected</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Spreadsheet Instructions */}
+      <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="border-b border-gray-200 p-4 sm:p-6">
+          <h2 className="flex items-center gap-2 text-lg font-semibold sm:text-xl">
+            <div className="flex h-5 w-5 items-center justify-center rounded bg-green-500">
+              <span className="text-xs font-bold text-white">📊</span>
+            </div>
+            Spreadsheet Filling Instructions
+          </h2>
+        </div>
+        <div className="space-y-4 p-4 sm:p-6">
+          <p className="text-sm text-gray-700 sm:text-base">
+            Mellows use a shared spreadsheet to log their daily activities.
+            Proper formatting is essential for accurate point tracking.
+          </p>
+
+          <div className="space-y-3">
+            <div
+              className="flex flex-col justify-between gap-2 rounded-lg border border-gray-200 p-4 sm:flex-row sm:items-center"
+              style={{ backgroundColor: "#67f15520" }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="rounded-full p-2 text-white"
+                  style={{ backgroundColor: "#67f155" }}
+                >
+                  <CheckCircle className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-800">Task Completed</p>
+                  <p className="text-sm text-gray-700">
+                    Use when you&apos;ve finished your assigned task
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="rounded border bg-white p-2 font-mono text-sm">
+                  <div style={{ color: "#67f155" }} className="font-bold">
+                    [DONE] Task description
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    Color: #67f155
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="flex flex-col justify-between gap-2 rounded-lg border border-gray-200 p-4 sm:flex-row sm:items-center"
+              style={{ backgroundColor: "#ff3a3a20" }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="rounded-full p-2 text-white"
+                  style={{ backgroundColor: "#ff3a3a" }}
+                >
+                  <XCircle className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-800">Not Available</p>
+                  <p className="text-sm text-gray-700">
+                    Use when you cannot complete the task
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="rounded border bg-white p-2 font-mono text-sm">
+                  <div style={{ color: "#ff3a3a" }} className="font-bold">
+                    [NOT AVAILABLE] Reason
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    Color: #ff3a3a
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="flex flex-col justify-between gap-2 rounded-lg border border-gray-200 p-4 sm:flex-row sm:items-center"
+              style={{ backgroundColor: "#fbbc0420" }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="rounded-full p-2 text-white"
+                  style={{ backgroundColor: "#fbbc04" }}
+                >
+                  <AlertCircle className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-800">No Task</p>
+                  <p className="text-sm text-gray-700">
+                    Use when no task was assigned
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="rounded border bg-white p-2 font-mono text-sm">
+                  <div style={{ color: "#fbbc04" }} className="font-bold">
+                    [NO TASK]
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    Color: #fbbc04
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="flex flex-col justify-between gap-2 rounded-lg border border-gray-200 p-4 sm:flex-row sm:items-center"
+              style={{ backgroundColor: "#3b82f620" }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="rounded-full p-2 text-white"
+                  style={{ backgroundColor: "#3b82f6" }}
+                >
+                  <div className="flex h-5 w-5 items-center justify-center">
+                    <span className="text-xs font-bold">🛡️</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-800">Freeze Card</p>
+                  <p className="text-sm text-gray-700">
+                    Use to protect your streak
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="rounded border bg-white p-2 font-mono text-sm">
+                  <div style={{ color: "#3b82f6" }} className="font-bold">
+                    [FC] or [FREEZE-CARD]
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">Color: Any</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <h3 className="mb-2 font-semibold text-blue-800">
+              Important Formatting Rules
+            </h3>
+            <ul className="space-y-1 text-sm text-blue-700">
+              <li>• Always use the exact color codes provided</li>
+              <li>
+                • Include the prefix in square brackets [DONE], [NOT AVAILABLE],
+                etc.
+              </li>
+              <li>• Add a brief description after [DONE] entries</li>
+              <li>• Be consistent with formatting for accurate tracking</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Freeze Card System */}
+      <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="border-b border-gray-200 p-4 sm:p-6">
+          <h2 className="flex items-center gap-2 text-lg font-semibold sm:text-xl">
+            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500">
+              <span className="text-xs text-white">🛡️</span>
+            </div>
+            Freeze Card System
+          </h2>
+        </div>
+        <div className="space-y-4 p-4 sm:p-6">
+          <p className="text-sm text-gray-700 sm:text-base">
+            Freeze Cards are special protection tools that help Mellows maintain
+            their streaks during challenging days.
+          </p>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <h3 className="mb-2 font-semibold text-blue-800">How to Earn</h3>
+              <p className="text-sm text-blue-700">
+                Earn 1 Freeze Card for every 50 points you accumulate
+              </p>
+            </div>
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+              <h3 className="mb-2 font-semibold text-green-800">
+                How They Work
+              </h3>
+              <p className="text-sm text-green-700">
+                Protects your streak even if you don&apos;t complete a task
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <h3 className="mb-2 font-semibold text-blue-800">
+                Freeze Card Benefits
+              </h3>
+              <ul className="space-y-1 text-sm text-blue-700">
+                <li>• Maintains your current streak count</li>
+                <li>• Gives 0 points for the day (no penalty)</li>
+                <li>• Can be used strategically on difficult days</li>
+                <li>
+                  • Must be declared in the spreadsheet using [FC] or
+                  [FREEZE-CARD]
+                </li>
+              </ul>
+            </div>
+
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <h3 className="mb-2 font-semibold text-amber-800">
+                Strategic Usage
+              </h3>
+              <ul className="space-y-1 text-sm text-amber-700">
+                <li>• Save freeze cards for emergencies or planned absences</li>
+                <li>
+                  • Don&apos;t waste them on days when you could complete tasks
+                  late
+                </li>
+                <li>
+                  • Remember: 1 point from late completion is better than 0 from
+                  freeze card
+                </li>
+                <li>
+                  • Use when you would otherwise mark &quot;Not Available&quot;
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-gray-200 p-4">
+            <h3 className="mb-2 font-semibold text-gray-800">
+              Example Calculation
+            </h3>
+            <div className="space-y-1 text-sm text-gray-700">
+              <p>• Mellow earns 100 points total → Gets 2 Freeze Cards</p>
+              <p>• Mellow earns 175 points total → Gets 3 Freeze Cards</p>
+              <p>• Freeze Cards accumulate and can be saved for future use</p>
+            </div>
           </div>
         </div>
       </div>
