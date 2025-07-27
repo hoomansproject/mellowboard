@@ -199,9 +199,9 @@ export async function getUserStreak(
 
     // If log was completed after deadline, break the streak
     if (createdAt > deadline) {
-      console.log(
-        `Log for ${taskDate.toDateString()} was completed after deadline on ${createdAt.toDateString()}. Streak broken.`,
-      );
+      // console.log(
+      //   `Log for ${taskDate.toDateString()} was completed after deadline on ${createdAt.toDateString()}. Streak broken.`,
+      // );
       break;
     }
 
@@ -211,9 +211,9 @@ export async function getUserStreak(
 
       // If this taskDate is not one day before expectedDate, break
       if (taskDate.toDateString() !== prevExpected.toDateString()) {
-        console.log(
-          `Streak broken at ${taskDate.toDateString()}, expected was ${prevExpected.toDateString()}`,
-        );
+        // console.log(
+        //   `Streak broken at ${taskDate.toDateString()}, expected was ${prevExpected.toDateString()}`,
+        // );
         break;
       }
     }
