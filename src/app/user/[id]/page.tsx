@@ -326,6 +326,19 @@ export default function UserDetailsPage() {
                               {log.points > 0 ? "+" : ""}
                               {log.points}
                             </p>
+                            {log.createdAt && (
+                              <p className="hidden text-sm text-gray-500 sm:block">
+                                <span>Recorded At: </span>
+                                {new Date(log.createdAt).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                  },
+                                )}
+                              </p>
+                            )}
                           </div>
                         </div>
                       );
