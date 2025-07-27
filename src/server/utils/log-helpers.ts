@@ -195,6 +195,7 @@ export async function getUserStreak(
 
     const deadline = new Date(taskDate);
     deadline.setDate(deadline.getDate() + 1);
+    deadline.setHours(23, 59, 59, 999); // Set to end of this day
 
     // If log was completed after deadline, break the streak
     if (createdAt > deadline) {
