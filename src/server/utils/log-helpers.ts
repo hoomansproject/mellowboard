@@ -197,14 +197,24 @@ export async function getUserStreak(
     deadline.setDate(deadline.getDate() + 1);
 
     // If log was completed after deadline, break the streak
-    if (createdAt > deadline) break;
+    if (createdAt > deadline) {
+      console.log(
+        `Log for ${taskDate.toDateString()} was completed after deadline on ${createdAt.toDateString()}. Streak broken.`,
+      );
+      break;
+    }
 
     if (expectedDate) {
       const prevExpected = new Date(expectedDate);
       prevExpected.setDate(prevExpected.getDate() - 1);
 
       // If this taskDate is not one day before expectedDate, break
-      if (taskDate.toDateString() !== prevExpected.toDateString()) break;
+      if (taskDate.toDateString() !== prevExpected.toDateString()) {
+        console.log(
+          `Streak broken at ${taskDate.toDateString()}, expected was ${prevExpected.toDateString()}`,
+        );
+        break;
+      }
     }
 
     streak++;
