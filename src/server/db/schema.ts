@@ -2,7 +2,7 @@
 // https://orm.drizzle.team/docs/sql-schema-declaration
 
 import { sql } from "drizzle-orm";
-import { index, pgTableCreator, unique } from "drizzle-orm/pg-core";
+import { index, unique, pgTable } from "drizzle-orm/pg-core";
 
 import { uuid, varchar, integer, timestamp } from "drizzle-orm/pg-core";
 import { logTypePg, logStatusPg } from "./enums/log";
@@ -13,9 +13,8 @@ import { logTypePg, logStatusPg } from "./enums/log";
  *
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
-export const createTable = pgTableCreator((name) => `mellowboard_${name}`);
 
-export const posts = createTable(
+export const posts = pgTable(
   "post",
   (d) => ({
     id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
@@ -32,7 +31,7 @@ export const posts = createTable(
 //mellowboard tables
 
 // ✅ users table
-export const users = createTable("users", {
+export const users = pgTable("users", {
   id: uuid("id")
     .primaryKey()
     .default(sql`gen_random_uuid()`),
@@ -44,7 +43,7 @@ export const users = createTable("users", {
 });
 
 // ✅ logs table
-export const logs = createTable(
+export const logs = pgTable(
   "logs",
   {
     id: uuid("id")
@@ -64,7 +63,7 @@ export const logs = createTable(
 );
 
 // ✅ cron_status table
-export const cronStatus = createTable("cron_status", {
+export const cronStatus = pgTable("cron_status", {
   id: uuid("id")
     .primaryKey()
     .default(sql`gen_random_uuid()`),
