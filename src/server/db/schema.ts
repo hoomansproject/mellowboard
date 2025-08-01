@@ -39,6 +39,8 @@ export const users = createTable("users", {
   name: varchar("name", { length: 100 }).unique().notNull(),
   github: varchar("github", { length: 100 }).unique(),
   freezeCardCount: integer("freeze_card_count").notNull().default(0),
+  totalPoints: integer("total_points").notNull().default(0),
+  streak: integer("streak").notNull().default(0),
 });
 
 // ✅ logs table
@@ -54,6 +56,7 @@ export const logs = createTable(
     type: logTypePg("type").notNull(),
     status: logStatusPg("status").notNull(),
     points: integer("points").notNull(),
+    description: varchar("description", { length: 500 }),
     taskDate: timestamp("task_date"),
     createdAt: timestamp("created_at").defaultNow(),
   },
