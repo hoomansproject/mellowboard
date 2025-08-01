@@ -6,8 +6,20 @@ CREATE TABLE  IF NOT EXISTS "cron_status" (
 --> statement-breakpoint
 -- drizzle/migrations/xxxx_create_log_enums.sql
 
-CREATE TYPE IF NOT EXISTS log_type AS ENUM ('meeting', 'task');
-CREATE TYPE IF NOT EXISTS log_status AS ENUM ('worked', 'not_available', 'no_task', 'freeze_card');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'log_type') THEN
+    CREATE TYPE log_type AS ENUM ('meeting', 'task');
+  END IF;
+END$$;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'log_status') THEN
+    CREATE TYPE log_status AS ENUM ('worked', 'not_available', 'no_task', 'freeze_card');
+  END IF;
+END$$;
+
+
 --> statement-breakpoint
 CREATE TABLE  IF NOT EXISTS "logs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
