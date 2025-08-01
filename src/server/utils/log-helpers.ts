@@ -7,6 +7,7 @@ import {
   calculateCronPoints,
   calculateMeetingPoints,
   calculateSeedPoints,
+  extractDescription,
   getStatusFromTextAndColor,
 } from "./points";
 import { Color, getStatusColor } from "./color";
@@ -165,9 +166,9 @@ export async function getOrInsertUserIds(
 }
 export async function getUserStreak(
   userId: string,
-  limit = 30,
+  limit?: number,
 ): Promise<number> {
-  const userLogs = await db
+  const query = db
     .select({
       taskDate: logs.taskDate,
       createdAt: logs.createdAt,
@@ -181,8 +182,9 @@ export async function getUserStreak(
         isNotNull(logs.taskDate),
       ),
     )
-    .orderBy(desc(logs.taskDate))
-    .limit(limit); // Only fetch recent logs
+    .orderBy(desc(logs.taskDate));
+
+  const userLogs = limit !== undefined ? await query.limit(limit) : await query;
 
   let streak = 0;
   let expectedDate: Date | null = null;
@@ -257,6 +259,7 @@ export function generateLogs(
           type: "task",
           status: getStatusFromTextAndColor(value, colorName),
           points: calculateSeedPoints(value, colorName),
+          description: extractDescription(value),
           taskDate: new Date(d.date),
         });
       }
@@ -355,6 +358,7 @@ export async function generateCronLogs(
           type: "task",
           status: getStatusFromTextAndColor(value, colorName),
           points: await calculateCronPoints(userId, value, colorName),
+          description: extractDescription(value),
           taskDate: currentDate,
         });
       }
@@ -380,6 +384,7 @@ export async function generateCronLogs(
           userId,
           type: "meeting",
           status: status,
+          description: null, // No description for cron meeting logs
           points: calculateMeetingPoints(status),
           taskDate: new Date(d.date),
         });
@@ -417,6 +422,30 @@ export async function updateLogs(pendingLogs: NewLog[]): Promise<number> {
           freezeCardCount: sql`${schema.users.freezeCardCount} + ((${sumPoints} % 50 + ${log.points}) / 50)::int`,
         })
         .where(eq(schema.users.id, log.userId));
+    }
+
+    // Update total points for each user using userMap
+    const userMap = new Map<string, number>();
+    for (const log of pendingLogs) {
+      if (!userMap.has(log.userId)) {
+        userMap.set(log.userId, 0);
+      }
+      userMap.set(log.userId, userMap.get(log.userId)! + log.points);
+    }
+    for (const [userId, totalPoints] of userMap) {
+      await tx
+        .update(schema.users)
+        .set({ totalPoints: sql`${schema.users.totalPoints} + ${totalPoints}` })
+        .where(eq(schema.users.id, userId));
+    }
+
+    // Update streaks for each user
+    for (const userId of userMap.keys()) {
+      const streak = await getUserStreak(userId);
+      await tx
+        .update(schema.users)
+        .set({ streak })
+        .where(eq(schema.users.id, userId));
     }
   });
 
