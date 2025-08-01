@@ -3,38 +3,24 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { db } from "@/server/db";
 import { logs, users } from "@/server/db/schema";
-import { sql, eq, asc } from "drizzle-orm";
-import { getUserStreak } from "@/server/utils/log-helpers";
+import { eq, asc, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 export const leaderboardRouter = createTRPCRouter({
   // GET /api/leaderboard
   getLeaderboard: publicProcedure.query(async () => {
-    const results = await db
+    const leaderboard = await db
       .select({
-        userId: logs.userId,
+        userId: users.id,
         username: users.name,
-        totalPoints: sql<number>`SUM(${logs.points})`.as("totalPoints"),
         githubUsername: users.github,
+        totalPoints: users.totalPoints,
+        streak: users.streak,
       })
-      .from(logs)
-      .innerJoin(users, eq(logs.userId, users.id))
-      .groupBy(logs.userId, users.name, users.github)
-      .orderBy(sql`SUM(${logs.points}) DESC`);
+      .from(users)
+      .orderBy(desc(users.totalPoints), desc(users.streak));
 
-    const streakResults = await Promise.all(
-      results.map(async (result) => {
-        return {
-          userId: result.userId,
-          username: result.username,
-          totalPoints: result.totalPoints,
-          githubUsername: result.githubUsername,
-          streak: await getUserStreak(result.userId),
-        };
-      }),
-    );
-
-    return streakResults;
+    return leaderboard;
   }),
 
   // GET /api/leaderboard/:userId
@@ -42,7 +28,12 @@ export const leaderboardRouter = createTRPCRouter({
     .input(z.object({ userId: z.string() }))
     .query(async ({ input }) => {
       const user = await db
-        .select({ name: users.name, githubUsername: users.github })
+        .select({
+          name: users.name,
+          githubUsername: users.github,
+          streak: users.streak,
+          totalPoints: users.totalPoints,
+        })
         .from(users)
         .where(eq(users.id, input.userId))
         .then((res) => res[0]);
@@ -57,6 +48,7 @@ export const leaderboardRouter = createTRPCRouter({
           type: logs.type,
           status: logs.status,
           points: logs.points,
+          description: logs.description,
           taskDate: logs.taskDate,
           createdAt: logs.createdAt,
         })
@@ -64,20 +56,15 @@ export const leaderboardRouter = createTRPCRouter({
         .where(eq(logs.userId, input.userId))
         .orderBy(asc(logs.taskDate));
 
-      const totalPoints = logsList.reduce(
-        (acc, log) => acc + (log?.points ?? 0),
-        0,
-      );
-
-      const streak = await getUserStreak(input.userId); // stays separate as it has logic
+      // stays separate as it has logic
 
       return {
         rank: 0,
         username: user.name,
         githubUsername: user.githubUsername,
         logs: logsList,
-        totalPoints,
-        streak,
+        totalPoints: user.totalPoints,
+        streak: user.streak,
       };
     }),
 });
