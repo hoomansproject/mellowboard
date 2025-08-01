@@ -1,11 +1,11 @@
 {
-  "id": "3d28fc34-31e3-49b5-8be5-7bf6bfb89ef0",
+  "id": "d5869ab9-5b2d-4d4e-88b0-3599c3c2415b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.mellowboard_cron_status": {
-      "name": "mellowboard_cron_status",
+    "public.cron_status": {
+      "name": "cron_status",
       "schema": "",
       "columns": {
         "id": {
@@ -37,8 +37,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.mellowboard_logs": {
-      "name": "mellowboard_logs",
+    "public.logs": {
+      "name": "logs",
       "schema": "",
       "columns": {
         "id": {
@@ -74,6 +74,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "description": {
+          "name": "description",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "task_date": {
           "name": "task_date",
           "type": "timestamp",
@@ -90,10 +96,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "mellowboard_logs_user_id_mellowboard_users_id_fk": {
-          "name": "mellowboard_logs_user_id_mellowboard_users_id_fk",
-          "tableFrom": "mellowboard_logs",
-          "tableTo": "mellowboard_users",
+        "logs_user_id_users_id_fk": {
+          "name": "logs_user_id_users_id_fk",
+          "tableFrom": "logs",
+          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
@@ -106,8 +112,8 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "mellowboard_logs_user_id_task_date_unique": {
-          "name": "mellowboard_logs_user_id_task_date_unique",
+        "logs_user_id_task_date_unique": {
+          "name": "logs_user_id_task_date_unique",
           "nullsNotDistinct": false,
           "columns": [
             "user_id",
@@ -119,8 +125,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.mellowboard_post": {
-      "name": "mellowboard_post",
+    "public.post": {
+      "name": "post",
       "schema": "",
       "columns": {
         "id": {
@@ -130,7 +136,7 @@
           "notNull": true,
           "identity": {
             "type": "byDefault",
-            "name": "mellowboard_post_id_seq",
+            "name": "post_id_seq",
             "schema": "public",
             "increment": "1",
             "startWith": "1",
@@ -184,8 +190,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.mellowboard_users": {
-      "name": "mellowboard_users",
+    "public.users": {
+      "name": "users",
       "schema": "",
       "columns": {
         "id": {
@@ -213,21 +219,35 @@
           "primaryKey": false,
           "notNull": true,
           "default": 0
+        },
+        "total_points": {
+          "name": "total_points",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "streak": {
+          "name": "streak",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
         }
       },
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "mellowboard_users_name_unique": {
-          "name": "mellowboard_users_name_unique",
+        "users_name_unique": {
+          "name": "users_name_unique",
           "nullsNotDistinct": false,
           "columns": [
             "name"
           ]
         },
-        "mellowboard_users_github_unique": {
-          "name": "mellowboard_users_github_unique",
+        "users_github_unique": {
+          "name": "users_github_unique",
           "nullsNotDistinct": false,
           "columns": [
             "github"
