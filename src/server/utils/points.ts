@@ -85,3 +85,15 @@ export function getStatusFromTextAndColor(
   // 💤 If totally empty and no relevant color, fallback to absent
   return "not_available";
 }
+
+/**
+ * Extract description from the cell value.
+ * Return the description without the Status REGEX.
+ */
+export function extractDescription(value: string): string | null {
+  const match = STATUS_REGEX.exec(value);
+  if (match) {
+    return value.replace(match[0], "").trim();
+  }
+  return value.trim();
+}
