@@ -44,6 +44,7 @@ export default function UserDetailsPage() {
     points: number;
     taskDate: Date | null;
     createdAt: Date | null;
+    description: string | null;
   };
   function groupLogsByDate(logs: Log[]): Record<string, Log[]> {
     return logs.reduce<Record<string, Log[]>>((acc, log) => {
@@ -310,6 +311,11 @@ export default function UserDetailsPage() {
                                     : statusInfo.label}
                                 </span>
                               </div>
+                              {log.description && (
+                                <p className="mt-1 text-sm text-gray-500">
+                                  {log.description}
+                                </p>
+                              )}
                             </div>
                           </div>
 
