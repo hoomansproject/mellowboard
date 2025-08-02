@@ -63,8 +63,8 @@ export const runCronJob = async () => {
   if (taskLogsToInsert.length > 0) {
     const updatedTaskLogs = await updateLogs(taskLogsToInsert);
     const updatedMeetingLogs = await updateLogs(meetingLogsToInsert);
-    console.log(`✅ Inserted ${updatedTaskLogs} task logs.
-      ✅ Inserted ${updatedMeetingLogs} meeting logs.
+    console.log(`✅ Inserted ${updatedTaskLogs} task logs from ${taskLogsToInsert.length}. 
+      ✅ Inserted ${updatedMeetingLogs} meeting logs from ${meetingLogsToInsert.length}.
       `);
   } else {
     console.log("ℹ️ No logs to insert.");
