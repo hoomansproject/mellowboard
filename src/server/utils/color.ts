@@ -5,7 +5,6 @@ export enum Color {
   Transparent = "transparent",
   Unknown = "unknown",
 }
-
 export function getStatusColor(color: {
   red?: number;
   green?: number;
@@ -19,26 +18,49 @@ export function getStatusColor(color: {
   const g = Math.round((color.green ?? 0) * 255);
   const b = Math.round((color.blue ?? 0) * 255);
 
-  // Define your RGB references
-  const COLORS = {
-    red: { r: 255, g: 66, b: 66 },
-    orange: { r: 255, g: 187, b: 0 },
-    green: { r: 102, g: 255, b: 102 },
+  // Reference color definitions
+  const COLORS: Record<Color, { r: number; g: number; b: number }> = {
+    [Color.Red]: { r: 255, g: 66, b: 66 },
+    [Color.Orange]: { r: 255, g: 187, b: 0 },
+    [Color.Green]: { r: 102, g: 255, b: 102 },
+    [Color.Transparent]: {
+      r: 0,
+      g: 0,
+      b: 0,
+    },
+    [Color.Unknown]: {
+      r: 0,
+      g: 0,
+      b: 0,
+    },
   };
 
-  const isClose = (a: number, b: number, tolerance = 30) =>
-    Math.abs(a - b) <= tolerance;
+  // Euclidean distance between two RGB colors
+  const colorDistance = (
+    c1: { r: number; g: number; b: number },
+    c2: { r: number; g: number; b: number },
+  ) =>
+    Math.sqrt(
+      Math.pow(c1.r - c2.r, 2) +
+        Math.pow(c1.g - c2.g, 2) +
+        Math.pow(c1.b - c2.b, 2),
+    );
 
-  const matches = (target: { r: number; g: number; b: number }) =>
-    isClose(r, target.r) && isClose(g, target.g) && isClose(b, target.b);
+  let closestColor: Color = Color.Unknown;
+  let minDistance = Infinity;
 
-  // Check against known colors
-  if (matches(COLORS.red)) return Color.Red;
-  if (matches(COLORS.orange)) return Color.Orange;
-  if (matches(COLORS.green)) return Color.Green;
+  for (const [name, refColor] of Object.entries(COLORS)) {
+    const dist = colorDistance({ r, g, b }, refColor);
+    if (dist < minDistance) {
+      minDistance = dist;
+      closestColor = name as Color;
+    }
+  }
 
-  // Check if it's white-ish or undefined
-  if (r > 240 && g > 240 && b > 240) return Color.Transparent;
+  // If color is very light (white-ish), return transparent
+  if (r > 240 && g > 240 && b > 240) {
+    return Color.Transparent;
+  }
 
-  return Color.Unknown; // fallback
+  return closestColor;
 }
