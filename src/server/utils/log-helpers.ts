@@ -325,6 +325,7 @@ export async function generateCronLogs(
 
     for (const d of dates) {
       const currentDate = new Date(d.date);
+      const isToday = currentDate.toDateString() === today.toDateString();
       if (currentDate > cutoff) continue; // skip future or today
 
       for (const u of usernames) {
@@ -350,11 +351,25 @@ export async function generateCronLogs(
         )
           continue;
 
+        const alreadyInserted = logsToInsert.some(
+          (log) =>
+            log.userId === userId &&
+            log.type === "task" &&
+            log.taskDate != null &&
+            log.taskDate < currentDate,
+        );
+
         logsToInsert.push({
           userId,
           type: "task",
           status: getStatusFromTextAndColor(value, colorName),
-          points: await calculateCronPoints(userId, value, colorName),
+          points: await calculateCronPoints(
+            userId,
+            value,
+            colorName,
+            isToday,
+            alreadyInserted,
+          ),
           description: extractDescription(value),
           taskDate: currentDate,
         });
@@ -408,7 +423,11 @@ export async function updateLogs(pendingLogs: NewLog[]): Promise<number> {
         })
         .returning({ id: logs.id });
 
-      if (!inserted?.[0]?.id) continue;
+      if (!inserted?.[0]?.id) {
+        // Log the failed insertion attempt
+        console.log("Failed to insert log:", log);
+        continue;
+      }
 
       count += 1;
 

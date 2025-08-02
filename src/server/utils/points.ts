@@ -36,15 +36,21 @@ export async function calculateCronPoints(
   userId: string,
   text: string,
   color: Color,
+  isToday: boolean,
+  alreadyInserted = false,
 ): Promise<number> {
-  const streak = await getUserStreak(userId, 11);
   const seedPoints = calculateSeedPoints(text, color);
+
+  if (!isToday) return seedPoints;
+
+  // Compare only the date part, ignoring the time
+  const streak = await getUserStreak(userId, 11);
+
+  if (alreadyInserted) return seedPoints * 2;
 
   if (streak > 10) return seedPoints * 4;
   if (streak > 5) return seedPoints * 3;
-  if (streak > 0) return seedPoints * 2;
-
-  return seedPoints;
+  return seedPoints * 2;
 }
 
 export function calculateMeetingPoints(text: LogStatus): number {
