@@ -8,7 +8,12 @@ import type { NextRequest } from "next/server";
 // Replace with your actual webhook URL
 
 async function sendDiscordNotification(content: string) {
-  await fetch(String(env.DISCORD_WEBHOOK_URL ?? ""), {
+  const webhookUrl = String(env.DISCORD_WEBHOOK_URL ?? "");
+  if (!webhookUrl) {
+    console.warn("DISCORD_WEBHOOK_URL is not set. Skipping notification.");
+    return;
+  }
+  await fetch(webhookUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ content }),
