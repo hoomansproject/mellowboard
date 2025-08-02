@@ -325,7 +325,7 @@ export async function generateCronLogs(
 
     for (const d of dates) {
       const currentDate = new Date(d.date);
-      const isToday = currentDate.toDateString() === today.toDateString();
+      const isToday = currentDate.toDateString() === cutoff.toDateString();
       if (currentDate > cutoff) continue; // skip future or today
 
       for (const u of usernames) {
@@ -356,7 +356,7 @@ export async function generateCronLogs(
             log.userId === userId &&
             log.type === "task" &&
             log.taskDate != null &&
-            log.taskDate < currentDate,
+            log.taskDate < new Date(),
         );
 
         logsToInsert.push({
