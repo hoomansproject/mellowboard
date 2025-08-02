@@ -85,7 +85,11 @@ export function parseUsernames(
     .filter(
       (v): v is { index: number; name: string } =>
         typeof v.name === "string" && v.name.trim() !== "",
-    );
+    )
+    .map((v) => ({
+      index: v.index,
+      name: normalizeName(v.name),
+    }));
 }
 export function parseDates(
   row: sheets_v4.Schema$RowData[],
