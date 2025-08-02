@@ -403,7 +403,9 @@ export async function updateLogs(pendingLogs: NewLog[]): Promise<number> {
       const inserted = await tx
         .insert(logs)
         .values(log)
-        .onConflictDoNothing({ target: [logs.userId, logs.taskDate] })
+        .onConflictDoNothing({
+          target: [logs.userId, logs.taskDate, logs.type],
+        })
         .returning({ id: logs.id });
 
       if (!inserted?.[0]?.id) continue;

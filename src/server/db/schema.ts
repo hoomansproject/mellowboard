@@ -46,7 +46,7 @@ export const logs = pgTable(
     taskDate: timestamp("task_date"),
     createdAt: timestamp("created_at").defaultNow(),
   },
-  (table) => [unique().on(table.userId, table.taskDate)],
+  (table) => [unique().on(table.userId, table.taskDate, table.type)],
 );
 
 // ✅ cron_status table
