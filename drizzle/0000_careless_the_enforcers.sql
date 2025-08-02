@@ -1,27 +1,11 @@
-CREATE TABLE  IF NOT EXISTS "cron_status" (
+CREATE TABLE "cron_status" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"status" varchar(100),
-	"created_at" timestamp DEFAULT now()
+	"status" "cron_status_type" NOT NULL,
+	"created_at" timestamp DEFAULT now(),
+	"time_taken" integer DEFAULT 0 NOT NULL
 );
 --> statement-breakpoint
--- drizzle/migrations/xxxx_create_log_enums.sql
-
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'log_type') THEN
-    CREATE TYPE log_type AS ENUM ('meeting', 'task');
-  END IF;
-END$$;
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'log_status') THEN
-    CREATE TYPE log_status AS ENUM ('worked', 'not_available', 'no_task', 'freeze_card');
-  END IF;
-END$$;
-
-
---> statement-breakpoint
-CREATE TABLE  IF NOT EXISTS "logs" (
+CREATE TABLE "logs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
 	"type" "log_type" NOT NULL,
@@ -32,9 +16,8 @@ CREATE TABLE  IF NOT EXISTS "logs" (
 	"created_at" timestamp DEFAULT now(),
 	CONSTRAINT "logs_user_id_task_date_unique" UNIQUE("user_id","task_date")
 );
-
 --> statement-breakpoint
-CREATE TABLE  IF NOT EXISTS "users" (
+CREATE TABLE "users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(100) NOT NULL,
 	"github" varchar(100),
@@ -45,6 +28,4 @@ CREATE TABLE  IF NOT EXISTS "users" (
 	CONSTRAINT "users_github_unique" UNIQUE("github")
 );
 --> statement-breakpoint
-ALTER TABLE "logs" ADD CONSTRAINT "logs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-
-
+ALTER TABLE "logs" ADD CONSTRAINT "logs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
