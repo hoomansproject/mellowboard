@@ -72,7 +72,7 @@ export function parseUsernames(
       .map((v, idx) => {
         const name = v.formattedValue;
         return typeof name === "string" && name.trim() !== ""
-          ? { index: idx, name }
+          ? { index: idx, name: normalizeName(name) }
           : null;
       })
       .filter((v): v is { index: number; name: string } => v !== null);
@@ -123,14 +123,7 @@ export async function getOrInsertUserIds(
   usernamesArg: { index: number; name: string }[],
   usernameMap?: Map<string, string>,
 ): Promise<Map<string, string>> {
-  const usernames = dedupeNames(
-    usernamesArg.map((u) => {
-      return {
-        index: u.index,
-        name: normalizeName(u.name),
-      };
-    }),
-  );
+  const usernames = dedupeNames(usernamesArg);
 
   const userIds = new Map<string, string>();
 
