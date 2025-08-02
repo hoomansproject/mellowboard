@@ -6,6 +6,7 @@ import { unique, pgTable } from "drizzle-orm/pg-core";
 
 import { uuid, varchar, integer, timestamp } from "drizzle-orm/pg-core";
 import { logTypePg, logStatusPg } from "./enums/log";
+import { cronStatusPg } from "./enums/cron";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -53,6 +54,7 @@ export const cronStatus = pgTable("cron_status", {
   id: uuid("id")
     .primaryKey()
     .default(sql`gen_random_uuid()`),
-  status: varchar("status", { length: 100 }),
+  status: cronStatusPg("status").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+  timeTaken: integer("time_taken").notNull().default(0),
 });
