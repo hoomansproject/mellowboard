@@ -397,7 +397,11 @@ export async function generateCronLogs(
 
 export async function updateLogs(pendingLogs: NewLog[]): Promise<number> {
   let count = 0;
+
   await db.transaction(async (tx) => {
+    const userMap = new Map<string, number>();
+
+    // Step 1: Insert logs and accumulate points only if insertion succeeds
     for (const log of pendingLogs) {
       const inserted = await tx
         .insert(logs)
@@ -409,37 +413,34 @@ export async function updateLogs(pendingLogs: NewLog[]): Promise<number> {
 
       count += 1;
 
-      const result = await tx
-        .select({ sum: sql<number>`SUM(points)` })
-        .from(logs)
-        .where(eq(logs.userId, log.userId));
+      // Accumulate points for user if inserted
+      userMap.set(log.userId, (userMap.get(log.userId) ?? 0) + log.points);
+    }
 
-      const sumPoints = result[0]?.sum ?? 0;
+    // Step 2: Update totalPoints and freezeCardCount for users who had logs inserted
+    for (const [userId, newPoints] of userMap) {
+      const result = await tx
+        .select({ totalPoints: schema.users.totalPoints })
+        .from(schema.users)
+        .where(eq(schema.users.id, userId));
+
+      const prevPoints = result[0]?.totalPoints ?? 0;
+      const newTotal = prevPoints + newPoints;
+
+      const prevThresholds = Math.floor(prevPoints / 50);
+      const newThresholds = Math.floor(newTotal / 50);
+      const thresholdsCrossed = Math.max(0, newThresholds - prevThresholds);
 
       await tx
         .update(schema.users)
         .set({
-          freezeCardCount: sql`${schema.users.freezeCardCount} + ((${sumPoints} % 50 + ${log.points}) / 50)::int`,
+          totalPoints: newTotal,
+          freezeCardCount: sql`${schema.users.freezeCardCount} + ${thresholdsCrossed}`,
         })
-        .where(eq(schema.users.id, log.userId));
-    }
-
-    // Update total points for each user using userMap
-    const userMap = new Map<string, number>();
-    for (const log of pendingLogs) {
-      if (!userMap.has(log.userId)) {
-        userMap.set(log.userId, 0);
-      }
-      userMap.set(log.userId, userMap.get(log.userId)! + log.points);
-    }
-    for (const [userId, totalPoints] of userMap) {
-      await tx
-        .update(schema.users)
-        .set({ totalPoints: sql`${schema.users.totalPoints} + ${totalPoints}` })
         .where(eq(schema.users.id, userId));
     }
 
-    // Update streaks for each user
+    // Step 3: Update streaks for users who had logs inserted
     for (const userId of userMap.keys()) {
       const streak = await getUserStreak(userId);
       await tx
