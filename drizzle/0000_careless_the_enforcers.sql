@@ -1,3 +1,22 @@
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'log_type') THEN
+    CREATE TYPE log_type AS ENUM ('meeting', 'task');
+  END IF;
+END$$;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'log_status') THEN
+    CREATE TYPE log_status AS ENUM ('worked', 'not_available', 'no_task', 'freeze_card');
+  END IF;
+END$$;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'cron_status_type') THEN
+	CREATE TYPE cron_status_type AS ENUM ('running', 'success', 'failed');
+  END IF;
+END$$;
+
 CREATE TABLE "cron_status" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"status" "cron_status_type" NOT NULL,
