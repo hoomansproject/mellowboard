@@ -50,7 +50,9 @@ export async function POST(request: NextRequest) {
         .where(sql`id = ${cronId}`);
     }
 
-    await sendDiscordNotification(`✅ Cron job succeeded in ${duration}s`);
+    await sendDiscordNotification(
+      `✅ Cron job succeeded in ${duration / 1000}s`,
+    );
 
     return new Response(
       JSON.stringify({ success: true, message: "Cron job ran successfully" }),
@@ -67,7 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     await sendDiscordNotification(
-      `❌ Cron job failed after ${duration}s\n\nError: ${
+      `❌ Cron job failed after ${duration / 1000}s\n\nError: ${
         error instanceof Error ? error.message : "Unknown error"
       }`,
     );
