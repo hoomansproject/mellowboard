@@ -156,6 +156,15 @@ export default function Component() {
             </Link>
           ))}
         </div>
+        {/* Subtle admin link */}
+        <div className="p-2 text-right">
+          <Link
+            href="/cron-jobs"
+            className="text-xs text-gray-400 transition-colors hover:text-gray-600"
+          >
+            system
+          </Link>
+        </div>
       </div>
     </div>
   );
