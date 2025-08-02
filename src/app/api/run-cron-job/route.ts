@@ -6,13 +6,9 @@ import { sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 
 // Replace with your actual webhook URL
-const DISCORD_WEBHOOK_URL =
-  typeof (env.DISCORD_WEBHOOK_URL as unknown) === "string"
-    ? (env.DISCORD_WEBHOOK_URL as string)
-    : "";
 
 async function sendDiscordNotification(content: string) {
-  await fetch(DISCORD_WEBHOOK_URL, {
+  await fetch(String(env.DISCORD_WEBHOOK_URL ?? ""), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ content }),
