@@ -7,6 +7,7 @@ export const env = createEnv({
    * isn't built with invalid env vars.
    */
   server: {
+    DISCORD_WEBHOOK_URL: z.string().url(),
     DATABASE_URL: z.string().url().optional(),
     /**
      * If you use Drizzle ORM, you can also specify the database connection details separately.
@@ -40,6 +41,7 @@ export const env = createEnv({
    * middlewares) or client-side so we need to destruct manually.
    */
   runtimeEnv: {
+    DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL,
     DATABASE_URL: process.env.DATABASE_URL,
     DATABASE_NAME: process.env.DATABASE_NAME,
     DATABASE_USER: process.env.DATABASE_USER,
