@@ -30,12 +30,12 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 
 
 ## TODOS
-- [ ] finish deployment
-- [ ] finish db schemas
-- [ ] fetch sheet data and save it
-- [ ] build logic for the cron job
-- [ ] add github actions
-- [ ] make sure the db is being updated successfully
-- [ ] handle errors for cron job failures or exception
-- [ ] create leaderboard page
-- [ ] make sure data is represented well
+- [x] finish deployment
+- [x] finish db schemas
+- [x] fetch sheet data and save it
+- [x] build logic for the cron job
+- [x] add github actions
+- [x] make sure the db is being updated successfully
+- [x] handle errors for cron job failures or exception
+- [x] create leaderboard page
+- [x] make sure data is represented well
