@@ -8,6 +8,7 @@ import {
   Minus,
   Calendar,
   Activity,
+  Shield,
 } from "lucide-react";
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -227,6 +228,11 @@ export default function UserDetailsPage() {
                   <Activity className="h-4 w-4 text-orange-500" />
                   <span className="font-semibold">{user.streak}</span>
                   <span className="text-gray-500">day streak</span>
+                </div>
+                <div className="flex items-center justify-center gap-2 sm:justify-start">
+                  <Shield className="h-4 w-4 text-blue-500" />
+                  <span className="font-semibold">{user.freezeCardCount}</span>
+                  <span className="text-gray-500">freeze cards</span>
                 </div>
               </div>
             </div>

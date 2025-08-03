@@ -5,7 +5,6 @@ import { db } from "@/server/db";
 import { logs, users } from "@/server/db/schema";
 import { eq, asc, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-
 export const leaderboardRouter = createTRPCRouter({
   // GET /api/leaderboard
   getLeaderboard: publicProcedure.query(async () => {
@@ -16,6 +15,7 @@ export const leaderboardRouter = createTRPCRouter({
         githubUsername: users.github,
         totalPoints: users.totalPoints,
         streak: users.streak,
+        freezeCardCount: users.freezeCardCount,
       })
       .from(users)
       .orderBy(desc(users.totalPoints), desc(users.streak));
@@ -33,6 +33,7 @@ export const leaderboardRouter = createTRPCRouter({
           githubUsername: users.github,
           streak: users.streak,
           totalPoints: users.totalPoints,
+          freezeCardCount: users.freezeCardCount,
         })
         .from(users)
         .where(eq(users.id, input.userId))
@@ -65,6 +66,7 @@ export const leaderboardRouter = createTRPCRouter({
         logs: logsList,
         totalPoints: user.totalPoints,
         streak: user.streak,
+        freezeCardCount: user.freezeCardCount,
       };
     }),
 });

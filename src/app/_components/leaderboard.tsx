@@ -2,7 +2,15 @@
 
 import { api } from "@/trpc/react";
 
-import { Trophy, Flame, Star, Medal, Award, AlertCircle } from "lucide-react";
+import {
+  Trophy,
+  Flame,
+  Star,
+  Medal,
+  Award,
+  AlertCircle,
+  Shield,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -151,6 +159,11 @@ export default function Component() {
                   <span className="hidden text-gray-500 lg:inline">
                     day{user.streak !== 1 ? "s" : ""}
                   </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Shield className="h-3 w-3 text-blue-500 sm:h-4 sm:w-4" />
+                  <span className="font-semibold">{user.freezeCardCount}</span>
+                  <span className="hidden text-gray-500 lg:inline">FC</span>
                 </div>
               </div>
             </Link>
