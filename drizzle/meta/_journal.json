@@ -15,6 +15,13 @@
       "when": 1754142834693,
       "tag": "0001_gifted_supernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1754212832379,
+      "tag": "0002_damp_secret_warriors",
+      "breakpoints": true
     }
   ]
 }
