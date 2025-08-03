@@ -2,9 +2,15 @@
 // https://orm.drizzle.team/docs/sql-schema-declaration
 
 import { sql } from "drizzle-orm";
-import { unique, pgTable } from "drizzle-orm/pg-core";
-
-import { uuid, varchar, integer, timestamp } from "drizzle-orm/pg-core";
+import {
+  uuid,
+  varchar,
+  integer,
+  timestamp,
+  unique,
+  pgTable,
+  boolean,
+} from "drizzle-orm/pg-core";
 import { logTypePg, logStatusPg } from "./enums/log";
 import { cronStatusPg } from "./enums/cron";
 
@@ -27,6 +33,7 @@ export const users = pgTable("users", {
   freezeCardCount: integer("freeze_card_count").notNull().default(0),
   totalPoints: integer("total_points").notNull().default(0),
   streak: integer("streak").notNull().default(0),
+  active: boolean("active").notNull().default(false),
 });
 
 // ✅ logs table

@@ -1,6 +1,5 @@
 import type { LogStatus, LogType } from "../db/enums/log";
 import { Color } from "./color";
-import { getUserStreak } from "./log-helpers";
 
 const STATUS_REGEX =
   /\[\s*(DONE|NO\s*TASK|NOT\s*AVAILABLE|FREEZE[-\s]?CARD|FC)\s*\]/i;
@@ -33,9 +32,9 @@ export function calculateSeedPoints(text: string, color: Color): number {
 }
 
 export async function calculateCronPoints(
-  userId: string,
   text: string,
   color: Color,
+  streak: number,
   isToday: boolean,
   alreadyInserted = false,
 ): Promise<number> {
@@ -44,7 +43,7 @@ export async function calculateCronPoints(
   if (!isToday) return seedPoints;
 
   // Compare only the date part, ignoring the time
-  const streak = await getUserStreak(userId, 11);
+  // const streak = await getUserStreak(userId, 11);
 
   if (alreadyInserted) return seedPoints * 2;
 

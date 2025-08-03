@@ -1,7 +1,7 @@
 import { type sheets_v4 } from "googleapis";
 import * as schema from "../db/schema";
 import { db } from "@/server/db";
-import { logs } from "../db/schema";
+import { logs, users } from "../db/schema";
 import { eq, sql, and, desc, inArray, isNotNull } from "drizzle-orm";
 import {
   calculateCronPoints,
@@ -40,112 +40,169 @@ export function dedupeNames(
   return Array.from(seen.values());
 }
 
-export function buildNameUsernameMap(
-  names: { index: number; name: string }[],
-  usernames: { index: number; name: string }[],
-): Map<string, string> {
-  const map = new Map<number, string>();
-  // Map index → username
-  usernames.forEach((u) => {
-    map.set(u.index, u.name.trim());
-  });
-
-  const result = new Map<string, string>();
-  names.forEach((n) => {
-    const username = map.get(n.index);
-    if (username != null) {
-      result.set(normalizeName(n.name), username);
-    }
-  });
-
-  return result;
-}
-
 export function parseUsernames(
   row: sheets_v4.Schema$RowData[],
   orientation: "row" | "column",
   orientationIndex: number,
-): { index: number; name: string }[] {
-  if (orientation === "row")
-    return (row[orientationIndex]?.values ?? [])
-      .map((v, idx) => {
-        const name = v.formattedValue;
+): Map<string, number> {
+  if (orientation === "row") {
+    const values = row[orientationIndex]?.values ?? [];
+    return new Map(
+      values
+        .map((v, idx) => {
+          const name = v.formattedValue;
+          return typeof name === "string" && name.trim() !== ""
+            ? ([normalizeName(name), idx] as [string, number])
+            : null;
+        })
+        .filter((v): v is [string, number] => v !== null),
+    );
+  }
+
+  return new Map(
+    row
+      .map((r, idx) => {
+        const name = r.values?.[orientationIndex]?.formattedValue;
         return typeof name === "string" && name.trim() !== ""
-          ? { index: idx, name: normalizeName(name) }
+          ? ([normalizeName(name), idx] as [string, number])
           : null;
       })
-      .filter((v): v is { index: number; name: string } => v !== null);
-
-  return row
-    .map((r, idx) => ({
-      index: idx,
-      name: r.values?.[orientationIndex]?.formattedValue,
-    }))
-    .filter(
-      (v): v is { index: number; name: string } =>
-        typeof v.name === "string" && v.name.trim() !== "",
-    )
-    .map((v) => ({
-      index: v.index,
-      name: normalizeName(v.name),
-    }));
+      .filter((v): v is [string, number] => v !== null),
+  );
 }
 export function parseDates(
   row: sheets_v4.Schema$RowData[],
   orientation: "row" | "column",
   orientationIndex: number,
-): { index: number; date: string }[] {
-  if (orientation === "column")
-    return row
-      .map((r, idx) => ({
-        index: idx,
-        date: r.values?.[orientationIndex]?.formattedValue,
-      }))
-      .filter(
-        (v): v is { index: number; date: string } =>
-          typeof v.date === "string" &&
-          v.date.trim() !== "" &&
-          new Date(v.date).setHours(0, 0, 0, 0) <
-            new Date().setHours(0, 0, 0, 0),
-      );
+): Map<string, number> {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Remove time for comparison
 
-  return (row[orientationIndex]?.values ?? [])
-    .map((v, idx) => {
-      const date = v.formattedValue;
-      return typeof date === "string" && date.trim() !== ""
-        ? { index: idx, date: date }
-        : null;
-    })
-    .filter(
-      (v): v is { index: number; date: string } =>
-        v !== null && new Date(v.date).getTime() < Date.now(),
+  if (orientation === "column") {
+    return new Map(
+      row
+        .map((r, idx) => {
+          const date = r.values?.[orientationIndex]?.formattedValue;
+          return typeof date === "string" &&
+            date.trim() !== "" &&
+            new Date(date).setHours(0, 0, 0, 0) < today.getTime()
+            ? ([date, idx] as [string, number])
+            : null;
+        })
+        .filter((v): v is [string, number] => v !== null),
     );
+  }
+
+  const values = row[orientationIndex]?.values ?? [];
+  return new Map(
+    values
+      .map((v, idx) => {
+        const date = v.formattedValue;
+        return typeof date === "string" &&
+          date.trim() !== "" &&
+          new Date(date).setHours(0, 0, 0, 0) < today.getTime()
+          ? ([date, idx] as [string, number])
+          : null;
+      })
+      .filter((v): v is [string, number] => v !== null),
+  );
+}
+function parseBooleanData(
+  row: sheets_v4.Schema$RowData[],
+  orientation: "row" | "column",
+  orientationIndex: number,
+): Map<number, boolean> {
+  function toBool(val: unknown): boolean | null {
+    if (typeof val === "boolean") return val;
+    if (typeof val === "string") {
+      const v = val.trim().toLowerCase();
+      if (v === "true") return true;
+      if (v === "false") return false;
+    }
+    return null;
+  }
+
+  if (orientation === "row") {
+    const values = row[orientationIndex]?.values ?? [];
+    return new Map(
+      values
+        .map((v, idx) => {
+          const value = toBool(v.formattedValue);
+          return value !== null ? ([idx, value] as [number, boolean]) : null;
+        })
+        .filter((v): v is [number, boolean] => v !== null),
+    );
+  }
+
+  return new Map(
+    row
+      .map((r, idx) => {
+        const value = toBool(r.values?.[orientationIndex]?.formattedValue);
+        return value !== null ? ([idx, value] as [number, boolean]) : null;
+      })
+      .filter((v): v is [number, boolean] => v !== null),
+  );
 }
 
-export async function getOrInsertUserIds(
-  usernamesArg: { index: number; name: string }[],
-  usernameMap?: Map<string, string>,
-): Promise<Map<string, string>> {
-  const usernames = dedupeNames(usernamesArg);
+export function buildNameUsernameMap(
+  GithubData: sheets_v4.Schema$RowData[],
+): Map<string, { username: string; active: boolean }> {
+  const githubNames = parseUsernames(GithubData, "column", 0);
+  const githubUsernames = parseUsernames(GithubData, "column", 1);
+  const userActive = parseBooleanData(GithubData, "column", 2);
+  console.log(githubNames);
+  console.log(githubUsernames);
+  console.log(userActive);
+  const indexToUsername = new Map<number, string>();
 
+  // Invert usernames Map<string, number> to Map<number, string>
+  for (const [username, index] of githubUsernames) {
+    if (index === 0) continue; // Skip header row
+    indexToUsername.set(index, username.trim());
+  }
+
+  const result = new Map<string, { username: string; active: boolean }>();
+
+  // For each name, find matching index in indexToUsername
+  for (const [name, index] of githubNames) {
+    if (index === 0) continue; // Skip header row
+    const username = indexToUsername.get(index);
+    const active = userActive.get(index) ?? false; // Default to false if not found
+    if (username != null) {
+      result.set(normalizeName(name), { username, active });
+    }
+  }
+
+  return result;
+}
+export async function getOrInsertUserIds(
+  usernameMap: Map<string, { username: string; active: boolean }>,
+): Promise<Map<string, string>> {
   const userIds = new Map<string, string>();
 
-  for (const u of usernames) {
+  for (const u of usernameMap.keys()) {
     const [existing] = await db
-      .select({ id: schema.users.id })
+      .select({ id: schema.users.id, active: schema.users.active })
       .from(schema.users)
-      .where(eq(schema.users.name, u.name))
+      .where(eq(schema.users.name, u))
       .limit(1);
 
     if (existing?.id) {
-      userIds.set(u.name, existing.id);
+      if (existing.active !== usernameMap.get(u)?.active) {
+        await db
+          .update(schema.users)
+          .set({ active: usernameMap.get(u)?.active })
+          .where(eq(schema.users.id, existing.id));
+      }
+      userIds.set(u, existing.id);
     } else {
       const insertData = {
-        name: u.name,
+        name: u,
         freezeCardCount: 0,
-        ...(usernameMap?.get(u.name)
-          ? { github: usernameMap.get(u.name) }
+        ...(usernameMap?.get(u)?.username
+          ? { github: usernameMap.get(u)?.username }
           : {}),
+        active: usernameMap.get(u)?.active ?? false,
       };
 
       const [inserted] = await db
@@ -154,7 +211,7 @@ export async function getOrInsertUserIds(
         .returning({ id: schema.users.id });
 
       if (inserted?.id) {
-        userIds.set(u.name, inserted.id);
+        userIds.set(u, inserted.id);
       }
     }
   }
@@ -223,30 +280,70 @@ export async function getUserStreak(
   return streak;
 }
 
+export async function getUserDataMapByType(
+  type: "task" | "meeting",
+): Promise<
+  | Map<string, { userId: string; lastDate: Date | null; streak: number }>
+  | Date
+  | undefined
+> {
+  if (type === "task") {
+    const tempUserData = await db
+      .select({
+        userId: users.id,
+        lastDate: sql<Date | null>`MAX(${logs.taskDate})`.as("lastDate"),
+        streak: users.streak,
+        name: users.name,
+      })
+      .from(users)
+      .leftJoin(logs, and(eq(logs.userId, users.id), eq(logs.type, "task")))
+      .groupBy(users.id, users.name, users.streak);
+
+    const userData = new Map<
+      string,
+      { userId: string; lastDate: Date | null; streak: number }
+    >();
+
+    for (const entry of tempUserData) {
+      userData.set(entry.name, {
+        userId: entry.userId,
+        lastDate: entry.lastDate, // will be null if no logs
+        streak: entry.streak,
+      });
+    }
+
+    return userData;
+  }
+
+  // type === "meeting"
+  const tempUserData = await db
+    .select({
+      lastDate: sql<Date>`MAX(${logs.taskDate})`.as("lastDate"),
+    })
+    .from(logs)
+    .where(eq(logs.type, "meeting"))
+    .limit(1);
+
+  return tempUserData[0]?.lastDate;
+}
+
 export async function generateCronLogs(
   rowData: sheets_v4.Schema$RowData[],
-  usernames: { index: number; name: string }[],
-  dates: { index: number; date: string }[],
-  userIds: Map<string, string>,
+  usernames: Map<string, number>, // name -> index
+  dates: Map<string, number>,
+  userIds: Map<string, string>, // name -> userId (log table foreign key)
   type: LogType,
+  userData:
+    | Map<string, { userId: string; lastDate: Date | null; streak?: number }>
+    | Date
+    | undefined,
 ): Promise<NewLog[]> {
   const logsToInsert: NewLog[] = [];
 
+  // CRON LOGS GENERATION DB READ (HAPPENS ONCE FOR TYPE "task" OR "meeting")
+
   if (type === "task") {
     // ✅ Get last taskDate for each user directly here
-    const lastLogs = await db
-      .select({
-        userId: logs.userId,
-        lastDate: sql<Date>`MAX(${logs.taskDate})`.as("lastDate"),
-      })
-      .from(logs)
-      .groupBy(logs.userId);
-
-    const lastLogDates = new Map(
-      lastLogs.map((entry) => [entry.userId, entry.lastDate]),
-    );
-
-    // ✅ Define cutoff date as yesterday 23:59:59
     const today = new Date();
     const cutoff = new Date(
       today.getFullYear(),
@@ -257,19 +354,22 @@ export async function generateCronLogs(
       59,
     );
 
-    for (const d of dates) {
-      const currentDate = new Date(d.date);
-      const isToday = currentDate.toDateString() === cutoff.toDateString();
-      if (currentDate > cutoff) continue; // skip future or today
+    // Sort dates ascending
+    const sortedDates = Array.from(dates.entries())
+      .map(([dateStr, index]) => ({ date: new Date(dateStr), dateStr, index }))
+      .filter(({ date }) => date <= cutoff) // filter out future or today
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-      for (const u of usernames) {
-        const userId = userIds.get(u.name);
-        if (!userId) continue;
+    for (const [username, uindex] of usernames) {
+      if (!(userData instanceof Map)) continue;
+      const user = userData.get(username);
+      if (!user) continue;
+      const lastDate = user?.lastDate ?? new Date(0); // fallback to epoch
 
-        const lastLogDate = lastLogDates.get(userId);
-        if (lastLogDate && currentDate <= lastLogDate) continue; // skip if already logged
+      for (const { date, index: dindex } of sortedDates) {
+        if (date <= lastDate) continue;
 
-        const cell = rowData[d.index]?.values?.[u.index];
+        const cell = rowData[dindex]?.values?.[uindex];
         const value = cell?.formattedValue ?? "";
         const color = cell?.effectiveFormat?.backgroundColor ?? {};
 
@@ -287,36 +387,38 @@ export async function generateCronLogs(
 
         const alreadyInserted = logsToInsert.some(
           (log) =>
-            log.userId === userId &&
+            log.userId === user.userId &&
             log.type === "task" &&
             log.taskDate != null &&
             log.taskDate < new Date(),
         );
 
         logsToInsert.push({
-          userId,
+          userId: user.userId,
           type: "task",
           status: getStatusFromTextAndColor(value, colorName),
           points: await calculateCronPoints(
-            userId,
             value,
             colorName,
-            isToday,
+            user?.streak ?? 0,
+            date.toDateString() === cutoff.toDateString(),
             alreadyInserted,
           ),
           description: extractDescription(value),
-          taskDate: currentDate,
+          taskDate: date,
         });
       }
     }
   }
 
   if (type === "meeting") {
-    for (const d of dates) {
-      for (const u of usernames) {
-        const cell = rowData[u.index]?.values?.[d.index];
+    for (const [d, dindex] of dates) {
+      if (userData instanceof Date && new Date(d) <= userData) continue;
+      for (const [u, uindex] of usernames) {
+        const cell = rowData[uindex]?.values?.[dindex];
         const value = cell?.formattedValue ?? "";
-        const userId = userIds.get(u.name);
+
+        const userId = userIds.get(u);
 
         if (!userId) continue;
         if (value.trim() === "") continue;
@@ -332,7 +434,7 @@ export async function generateCronLogs(
           status: status,
           description: null, // No description for cron meeting logs
           points: calculateMeetingPoints(status),
-          taskDate: new Date(d.date),
+          taskDate: new Date(d),
         });
       }
     }
@@ -391,17 +493,49 @@ export async function updateLogs(pendingLogs: NewLog[]): Promise<number> {
         })
         .where(eq(schema.users.id, userId));
     }
-
-    // Step 3: Update streaks for users who had logs inserted
-    for (const userId of userMap.keys()) {
-      // convert to w/o await getUserStreak(userId, 11);
-      const streak = await getUserStreak(userId);
-      await tx
-        .update(schema.users)
-        .set({ streak })
-        .where(eq(schema.users.id, userId));
-    }
   });
 
   return count;
+}
+
+export function checkNewLogsForStreak(logs: NewLog[]) {
+  const streakMap = new Map<string, boolean>();
+
+  for (const log of logs) {
+    if (
+      log.type === "task" &&
+      (log.status === "worked" ||
+        log.status === "freeze_card" ||
+        log.status === "no_task") &&
+      log.taskDate
+    ) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(0, 0, 0, 0);
+
+      const logDate = new Date(log.taskDate);
+      logDate.setHours(0, 0, 0, 0);
+
+      if (logDate.getTime() === yesterday.getTime()) {
+        streakMap.set(log.userId, true);
+      }
+    }
+  }
+
+  return streakMap;
+}
+export async function updateStreak(
+  taskUserData: Map<
+    string,
+    { userId: string; lastDate: Date | null; streak: number }
+  >,
+  taskLogsToInsert: NewLog[],
+): Promise<void> {
+  const streakMap = checkNewLogsForStreak(taskLogsToInsert);
+  for (const [, { userId, streak }] of taskUserData.entries()) {
+    await db
+      .update(users)
+      .set({ streak: streakMap.get(userId) ? (streak ?? 0) + 1 : 0 })
+      .where(eq(users.id, userId));
+  }
 }
