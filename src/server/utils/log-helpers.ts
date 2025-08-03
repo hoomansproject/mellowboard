@@ -6,7 +6,6 @@ import { eq, sql, and, desc, inArray, isNotNull } from "drizzle-orm";
 import {
   calculateCronPoints,
   calculateMeetingPoints,
-  calculateSeedPoints,
   extractDescription,
   getStatusFromTextAndColor,
 } from "./points";
@@ -224,71 +223,6 @@ export async function getUserStreak(
   return streak;
 }
 
-export function generateLogs(
-  rowData: sheets_v4.Schema$RowData[],
-  usernames: { index: number; name: string }[],
-  dates: { index: number; date: string }[],
-  userIds: Map<string, string>,
-  type: LogType,
-): NewLog[] {
-  const logsToInsert: NewLog[] = [];
-
-  if (type === "task")
-    for (const d of dates) {
-      for (const u of usernames) {
-        const cell = rowData[d.index]?.values?.[u.index];
-        const value = cell?.formattedValue ?? "";
-        const color = cell?.effectiveFormat?.backgroundColor ?? {};
-
-        const colorName = getStatusColor({
-          red: color.red ?? 0,
-          green: color.green ?? 0,
-          blue: color.blue ?? 0,
-        });
-
-        const userId = userIds.get(u.name);
-
-        if (!userId) continue;
-        if (colorName === Color.Transparent && value.trim() === "") continue;
-
-        logsToInsert.push({
-          userId,
-          type: "task",
-          status: getStatusFromTextAndColor(value, colorName),
-          points: calculateSeedPoints(value, colorName),
-          description: extractDescription(value),
-          taskDate: new Date(d.date),
-        });
-      }
-    }
-  if (type === "meeting") {
-    for (const d of dates) {
-      for (const u of usernames) {
-        const cell = rowData[u.index]?.values?.[d.index];
-        const value = cell?.formattedValue ?? "";
-        const userId = userIds.get(u.name);
-
-        if (!userId) continue;
-        if (value.trim() === "") continue;
-
-        const status = getStatusFromTextAndColor(
-          value,
-          Color.Transparent,
-          "meeting",
-        );
-        logsToInsert.push({
-          userId,
-          type: "meeting",
-          status: status,
-          points: calculateMeetingPoints(status),
-          taskDate: new Date(d.date),
-        });
-      }
-    }
-  }
-  return logsToInsert;
-}
-
 export async function generateCronLogs(
   rowData: sheets_v4.Schema$RowData[],
   usernames: { index: number; name: string }[],
@@ -460,6 +394,7 @@ export async function updateLogs(pendingLogs: NewLog[]): Promise<number> {
 
     // Step 3: Update streaks for users who had logs inserted
     for (const userId of userMap.keys()) {
+      // convert to w/o await getUserStreak(userId, 11);
       const streak = await getUserStreak(userId);
       await tx
         .update(schema.users)
