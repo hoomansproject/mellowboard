@@ -33,6 +33,7 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
+    NEXT_PUBLIC_URL_FINDER: z.string().url().optional(),
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
   },
 
@@ -53,6 +54,7 @@ export const env = createEnv({
     GOOGLE_PRIVATE_KEY: process.env.GOOGLE_PRIVATE_KEY,
     SHEET_ID: process.env.SHEET_ID,
     CRON_SECRET: process.env.CRON_SECRET,
+    NEXT_PUBLIC_URL_FINDER: process.env.NEXT_PUBLIC_URL_FINDER,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**
