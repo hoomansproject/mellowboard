@@ -1,5 +1,6 @@
 "use client";
 
+import { env } from "@/env";
 import { api } from "@/trpc/react";
 import {
   ArrowLeft,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 export default function UserDetailsPage() {
   const router = useRouter();
@@ -21,6 +23,7 @@ export default function UserDetailsPage() {
   const { data: user, isLoading } = api.leaderboard.getUserLogs.useQuery({
     userId: id,
   });
+  const [isSheetLoading, setIsSheetLoading] = useState(false);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -119,8 +122,24 @@ export default function UserDetailsPage() {
             : "Not Available";
     }
   };
+  const handleClick = async (name: string, log: Log, type: Log["type"]) => {
+    if (type == "meeting") return;
+    setIsSheetLoading(true);
+    try {
+      const res = await fetch(
+        `${env.NEXT_PUBLIC_URL_FINDER}?name=${encodeURIComponent(name)}&date=${encodeURIComponent(log.taskDate ? log.taskDate.toLocaleDateString("en-US", { month: "2-digit", day: "numeric", year: "numeric" }) : "")}&sheet=${encodeURIComponent(type === "task" ? "Commit Box" : "Weekly StandUp")}`,
+      );
+      const url = await res.text();
+      router.push(url);
+    } catch (err) {
+      console.error("Redirect failed", err);
+      alert("Failed to redirect.");
+    } finally {
+      setIsSheetLoading(false);
+    }
+  };
 
-  if (isLoading) {
+  if (isLoading || isSheetLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div
@@ -283,7 +302,10 @@ export default function UserDetailsPage() {
                       return (
                         <div
                           key={log.id}
-                          className="flex flex-row justify-between gap-2 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 sm:flex-row sm:items-center sm:gap-4"
+                          className="flex cursor-pointer flex-row justify-between gap-2 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 sm:flex-row sm:items-center sm:gap-4"
+                          onClick={async () => {
+                            await handleClick(user.username, log, log.type);
+                          }}
                         >
                           <div className="flex min-w-0 flex-1 items-center gap-3">
                             <div
