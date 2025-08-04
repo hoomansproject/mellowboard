@@ -49,7 +49,7 @@ export const logs = pgTable(
     type: logTypePg("type").notNull(),
     status: logStatusPg("status").notNull(),
     points: integer("points").notNull(),
-    description: varchar("description", { length: 500 }),
+    description: varchar("description", { length: 1000 }),
     taskDate: timestamp("task_date"),
     createdAt: timestamp("created_at").defaultNow(),
   },
