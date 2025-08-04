@@ -16,6 +16,7 @@ export const leaderboardRouter = createTRPCRouter({
         totalPoints: users.totalPoints,
         streak: users.streak,
         freezeCardCount: users.freezeCardCount,
+        active: users.active,
       })
       .from(users)
       .orderBy(desc(users.totalPoints), desc(users.streak));
@@ -34,6 +35,7 @@ export const leaderboardRouter = createTRPCRouter({
           streak: users.streak,
           totalPoints: users.totalPoints,
           freezeCardCount: users.freezeCardCount,
+          active: users.active,
         })
         .from(users)
         .where(eq(users.id, input.userId))
@@ -67,6 +69,7 @@ export const leaderboardRouter = createTRPCRouter({
         totalPoints: user.totalPoints,
         streak: user.streak,
         freezeCardCount: user.freezeCardCount,
+        active: user.active,
       };
     }),
 });

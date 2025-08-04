@@ -10,6 +10,7 @@ import {
   Award,
   AlertCircle,
   Shield,
+  PanelTopInactive,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -104,8 +105,14 @@ export default function Component() {
           {leaderboard?.map((user, idx) => (
             <Link
               key={user.userId}
-              href={`/user/${user.userId}?rank=${idx + 1}`}
-              className={`flex w-full cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors sm:p-4 ${"border-gray-200 hover:bg-gray-50"}`}
+              href={user.active ? `/user/${user.userId}?rank=${idx + 1}` : "#"}
+              tabIndex={user.active ? 0 : -1}
+              aria-disabled={!user.active}
+              className={`flex w-full cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors sm:p-4 ${
+                user.active
+                  ? "border-gray-200 hover:bg-gray-50"
+                  : "pointer-events-none cursor-not-allowed border-gray-200 bg-white opacity-50"
+              }`}
             >
               <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
                 <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
@@ -145,6 +152,12 @@ export default function Component() {
               </div>
 
               <div className="flex flex-shrink-0 flex-col items-end gap-2 text-xs sm:flex-row sm:items-center sm:gap-6 sm:text-sm">
+                {!user.active ? (
+                  <div className="flex items-center gap-1">
+                    <PanelTopInactive className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="font-semibold">{"Inactive"}</span>
+                  </div>
+                ) : null}
                 <div className="flex items-center gap-1">
                   <Star className="h-3 w-3 text-yellow-500 sm:h-4 sm:w-4" />
                   <span className="font-semibold">
