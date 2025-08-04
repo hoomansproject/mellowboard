@@ -8,7 +8,7 @@ import {
   parseDates,
   parseUsernames,
   updateLogs,
-  updateStreak,
+  updatePointsFreezeStreak,
 } from "../utils/log-helpers";
 
 export const runCronJob = async () => {
@@ -93,16 +93,20 @@ export const runCronJob = async () => {
     // update streak w/o depending on logs
 
     //2 db write happens in task for logs and points
-    const updatedTaskLogs = await updateLogs(taskLogsToInsert);
-    const updatedMeetingLogs = await updateLogs(meetingLogsToInsert);
+    // const updatedTaskLogs = await updateLogs(taskLogsToInsert);
+    // const updatedMeetingLogs = await updateLogs(meetingLogsToInsert);
+    const [updatedLogs, userMap] = await updateLogs([
+      ...taskLogsToInsert,
+      ...meetingLogsToInsert,
+    ]);
 
     if (taskDbRead instanceof Map) {
       // one whole db write happens here
-      await updateStreak(taskDbRead, taskLogsToInsert);
+      await updatePointsFreezeStreak(taskDbRead, taskLogsToInsert, userMap);
     }
-    console.log(`✅ Inserted ${updatedTaskLogs} task logs from ${taskLogsToInsert.length}. 
-      ✅ Inserted ${updatedMeetingLogs} meeting logs from ${meetingLogsToInsert.length}.
-      `);
+    console.log(
+      `✅ Inserted ${updatedLogs} logs from ${taskLogsToInsert.length + meetingLogsToInsert.length}.`,
+    );
   } else {
     console.log("ℹ️ No logs to insert.");
   }

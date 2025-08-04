@@ -144,15 +144,20 @@ function parseBooleanData(
   );
 }
 
+function parseDbUTCDatetime(str: string | Date): Date {
+  if (str instanceof Date) return str;
+
+  // Convert "2025-08-01 18:30:00" → "2025-08-01T18:30:00Z"
+  const utcString = str.replace(" ", "T") + "Z";
+  return new Date(utcString);
+}
+
 export function buildNameUsernameMap(
   GithubData: sheets_v4.Schema$RowData[],
 ): Map<string, { username: string; active: boolean }> {
   const githubNames = parseUsernames(GithubData, "column", 0);
   const githubUsernames = parseUsernames(GithubData, "column", 1);
   const userActive = parseBooleanData(GithubData, "column", 2);
-  console.log(githubNames);
-  console.log(githubUsernames);
-  console.log(userActive);
   const indexToUsername = new Map<number, string>();
 
   // Invert usernames Map<string, number> to Map<number, string>
@@ -307,7 +312,9 @@ export async function getUserDataMapByType(
     for (const entry of tempUserData) {
       userData.set(entry.name, {
         userId: entry.userId,
-        lastDate: entry.lastDate, // will be null if no logs
+        lastDate: entry.lastDate
+          ? new Date(parseDbUTCDatetime(entry.lastDate))
+          : null, // will be null if no logs
         streak: entry.streak,
       });
     }
@@ -324,7 +331,9 @@ export async function getUserDataMapByType(
     .where(eq(logs.type, "meeting"))
     .limit(1);
 
-  return tempUserData[0]?.lastDate;
+  return tempUserData[0]?.lastDate
+    ? new Date(parseDbUTCDatetime(tempUserData[0].lastDate))
+    : undefined;
 }
 
 export async function generateCronLogs(
@@ -354,11 +363,19 @@ export async function generateCronLogs(
       59,
     );
 
-    // Sort dates ascending
-    const sortedDates = Array.from(dates.entries())
-      .map(([dateStr, index]) => ({ date: new Date(dateStr), dateStr, index }))
-      .filter(({ date }) => date <= cutoff) // filter out future or today
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
+    // Create a Map<Date, { dateStr: string; index: number }> to maintain order without using a large array
+    const sortedDatesMap = new Map<Date, { dateStr: string; index: number }>();
+    Array.from(dates.entries())
+      .map(([dateStr, index]) => {
+        const date = new Date(dateStr);
+
+        return { date, dateStr, index };
+      })
+      .filter(({ date }) => date <= cutoff) // Compare date-only
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .forEach(({ date, dateStr, index }) => {
+        sortedDatesMap.set(date, { dateStr, index });
+      });
 
     for (const [username, uindex] of usernames) {
       if (!(userData instanceof Map)) continue;
@@ -366,8 +383,8 @@ export async function generateCronLogs(
       if (!user) continue;
       const lastDate = user?.lastDate ?? new Date(0); // fallback to epoch
 
-      for (const { date, index: dindex } of sortedDates) {
-        if (date <= lastDate) continue;
+      for (const [date, { index: dindex }] of sortedDatesMap) {
+        if (date.getTime() <= lastDate.getTime()) continue;
 
         const cell = rowData[dindex]?.values?.[uindex];
         const value = cell?.formattedValue ?? "";
@@ -412,8 +429,21 @@ export async function generateCronLogs(
   }
 
   if (type === "meeting") {
-    for (const [d, dindex] of dates) {
-      if (userData instanceof Date && new Date(d) <= userData) continue;
+    const sortedDatesMap = new Map<Date, { dateStr: string; index: number }>();
+    Array.from(dates.entries())
+      .map(([dateStr, index]) => {
+        const date = new Date(dateStr);
+        date.setHours(0, 0, 0, 0); // Strip time
+        return { date, dateStr, index };
+      })
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .forEach(({ date, dateStr, index }) => {
+        sortedDatesMap.set(date, { dateStr, index });
+      });
+
+    for (const [d, { index: dindex }] of sortedDatesMap) {
+      if (userData instanceof Date && d.getTime() <= userData.getTime())
+        continue;
       for (const [u, uindex] of usernames) {
         const cell = rowData[uindex]?.values?.[dindex];
         const value = cell?.formattedValue ?? "";
@@ -434,7 +464,7 @@ export async function generateCronLogs(
           status: status,
           description: null, // No description for cron meeting logs
           points: calculateMeetingPoints(status),
-          taskDate: new Date(d),
+          taskDate: d,
         });
       }
     }
@@ -443,12 +473,12 @@ export async function generateCronLogs(
   return logsToInsert;
 }
 
-export async function updateLogs(pendingLogs: NewLog[]): Promise<number> {
+export async function updateLogs(
+  pendingLogs: NewLog[],
+): Promise<[number, Map<string, number>]> {
   let count = 0;
-
+  const userMap = new Map<string, number>(); // userId -> accumulated points
   await db.transaction(async (tx) => {
-    const userMap = new Map<string, number>();
-
     // Step 1: Insert logs and accumulate points only if insertion succeeds
     for (const log of pendingLogs) {
       const inserted = await tx
@@ -461,7 +491,7 @@ export async function updateLogs(pendingLogs: NewLog[]): Promise<number> {
 
       if (!inserted?.[0]?.id) {
         // Log the failed insertion attempt
-        console.log("Failed to insert log:", log);
+        // console.log("Failed to insert log:", log);
         continue;
       }
 
@@ -472,34 +502,16 @@ export async function updateLogs(pendingLogs: NewLog[]): Promise<number> {
     }
 
     // Step 2: Update totalPoints and freezeCardCount for users who had logs inserted
-    for (const [userId, newPoints] of userMap) {
-      const result = await tx
-        .select({ totalPoints: schema.users.totalPoints })
-        .from(schema.users)
-        .where(eq(schema.users.id, userId));
-
-      const prevPoints = result[0]?.totalPoints ?? 0;
-      const newTotal = prevPoints + newPoints;
-
-      const prevThresholds = Math.floor(prevPoints / 50);
-      const newThresholds = Math.floor(newTotal / 50);
-      const thresholdsCrossed = Math.max(0, newThresholds - prevThresholds);
-
-      await tx
-        .update(schema.users)
-        .set({
-          totalPoints: newTotal,
-          freezeCardCount: sql`${schema.users.freezeCardCount} + ${thresholdsCrossed}`,
-        })
-        .where(eq(schema.users.id, userId));
-    }
   });
 
-  return count;
+  return [count, userMap];
 }
 
 export function checkNewLogsForStreak(logs: NewLog[]) {
   const streakMap = new Map<string, boolean>();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(0, 0, 0, 0);
 
   for (const log of logs) {
     if (
@@ -509,10 +521,6 @@ export function checkNewLogsForStreak(logs: NewLog[]) {
         log.status === "no_task") &&
       log.taskDate
     ) {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      yesterday.setHours(0, 0, 0, 0);
-
       const logDate = new Date(log.taskDate);
       logDate.setHours(0, 0, 0, 0);
 
@@ -524,18 +532,45 @@ export function checkNewLogsForStreak(logs: NewLog[]) {
 
   return streakMap;
 }
-export async function updateStreak(
+
+export async function updatePointsFreezeStreak(
   taskUserData: Map<
     string,
     { userId: string; lastDate: Date | null; streak: number }
   >,
-  taskLogsToInsert: NewLog[],
+  logsToInsert: NewLog[],
+  userMap: Map<string, number>,
 ): Promise<void> {
-  const streakMap = checkNewLogsForStreak(taskLogsToInsert);
-  for (const [, { userId, streak }] of taskUserData.entries()) {
+  const streakMap = checkNewLogsForStreak(logsToInsert);
+
+  for (const [userId, newPoints] of userMap.entries()) {
+    // Get previous user data
+    const result = await db
+      .select({
+        totalPoints: schema.users.totalPoints,
+        streak: schema.users.streak,
+      })
+      .from(schema.users)
+      .where(eq(schema.users.id, userId));
+
+    const prevPoints = result[0]?.totalPoints ?? 0;
+    const prevStreak = result[0]?.streak ?? 0;
+
+    const newTotal = prevPoints + newPoints;
+
+    const prevThresholds = Math.floor(prevPoints / 50);
+    const newThresholds = Math.floor(newTotal / 50);
+    const thresholdsCrossed = Math.max(0, newThresholds - prevThresholds);
+
+    const incrementStreak = streakMap.get(userId) ? prevStreak + 1 : 0;
+
     await db
-      .update(users)
-      .set({ streak: streakMap.get(userId) ? (streak ?? 0) + 1 : 0 })
-      .where(eq(users.id, userId));
+      .update(schema.users)
+      .set({
+        totalPoints: newTotal,
+        freezeCardCount: sql`${schema.users.freezeCardCount} + ${thresholdsCrossed}`,
+        streak: incrementStreak,
+      })
+      .where(eq(schema.users.id, userId));
   }
 }
