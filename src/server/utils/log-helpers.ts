@@ -489,27 +489,22 @@ export async function generateCronLogs(
 export async function updateLogs(
   pendingLogs: NewLog[],
 ): Promise<[number, Map<string, number>]> {
-  let count = 0;
+  let successCount = 0;
   const userMap = new Map<string, number>(); // userId -> accumulated points
   await db.transaction(async (tx) => {
     // Step 1: Insert logs and accumulate points only if insertion succeeds
-    for (const log of pendingLogs) {
-      const inserted = await tx
-        .insert(logs)
-        .values(log)
-        .onConflictDoNothing({
-          target: [logs.userId, logs.taskDate, logs.type],
-        })
-        .returning({ id: logs.id });
+    const inserted = await tx
+      .insert(logs)
+      .values(pendingLogs)
+      .onConflictDoNothing({
+        target: [logs.userId, logs.taskDate, logs.type],
+      })
+      .returning({ id: logs.id, userId: logs.userId, points: logs.points });
 
-      if (!inserted?.[0]?.id) {
-        // Log the failed insertion attempt
-        // console.log("Failed to insert log:", log);
-        continue;
-      }
+    // Track how many were inserted
+    successCount = inserted.length;
 
-      count += 1;
-
+    for (const log of inserted) {
       // Accumulate points for user if inserted
       userMap.set(log.userId, (userMap.get(log.userId) ?? 0) + log.points);
     }
@@ -517,7 +512,7 @@ export async function updateLogs(
     // Step 2: Update totalPoints and freezeCardCount for users who had logs inserted
   });
 
-  return [count, userMap];
+  return [successCount, userMap];
 }
 
 export function checkNewLogsForStreak(logs: NewLog[]) {
