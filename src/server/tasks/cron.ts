@@ -92,9 +92,7 @@ export const runCronJob = async () => {
   if (taskLogsToInsert.length > 0) {
     // update streak w/o depending on logs
 
-    //2 db write happens in task for logs and points
-    // const updatedTaskLogs = await updateLogs(taskLogsToInsert);
-    // const updatedMeetingLogs = await updateLogs(meetingLogsToInsert);
+    // 1 db write happens in task for logs and points
     const [updatedLogs, userMap] = await updateLogs([
       ...taskLogsToInsert,
       ...meetingLogsToInsert,
