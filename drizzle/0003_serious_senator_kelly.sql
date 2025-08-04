@@ -1,0 +1,1 @@
+ALTER TABLE "logs" ALTER COLUMN "description" SET DATA TYPE varchar(1000);

@@ -22,6 +22,13 @@
       "when": 1754212832379,
       "tag": "0002_damp_secret_warriors",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1754289803723,
+      "tag": "0003_serious_senator_kelly",
+      "breakpoints": true
     }
   ]
 }
