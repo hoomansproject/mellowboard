@@ -1,8 +1,8 @@
-name: Every 30 minutes cron
+name: Daily 5:30 AM IST cron
 
 on:
   schedule:
-    - cron: "*/30 * * * *"  # Every 30 minutes UTC
+    - cron: "0 0 * * *"  # 5:30 AM IST = 0:00 UTC
 
 jobs:
   run-cron:
@@ -12,4 +12,3 @@ jobs:
         run: |
           curl -X POST https://mellowboard.vercel.app/api/run-cron-job \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
-
