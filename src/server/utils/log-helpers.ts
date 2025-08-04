@@ -285,10 +285,16 @@ export async function getUserStreak(
   return streak;
 }
 
-export async function getUserDataMapByType(
-  type: "task" | "meeting",
-): Promise<
-  | Map<string, { userId: string; lastDate: Date | null; streak: number }>
+export async function getUserDataMapByType(type: "task" | "meeting"): Promise<
+  | Map<
+      string,
+      {
+        userId: string;
+        lastDate: Date | null;
+        streak: number;
+        totalPoints: number;
+      }
+    >
   | Date
   | undefined
 > {
@@ -299,6 +305,7 @@ export async function getUserDataMapByType(
         lastDate: sql<Date | null>`MAX(${logs.taskDate})`.as("lastDate"),
         streak: users.streak,
         name: users.name,
+        totalPoints: users.totalPoints,
       })
       .from(users)
       .leftJoin(logs, and(eq(logs.userId, users.id), eq(logs.type, "task")))
@@ -306,7 +313,12 @@ export async function getUserDataMapByType(
 
     const userData = new Map<
       string,
-      { userId: string; lastDate: Date | null; streak: number }
+      {
+        userId: string;
+        lastDate: Date | null;
+        streak: number;
+        totalPoints: number;
+      }
     >();
 
     for (const entry of tempUserData) {
@@ -316,6 +328,7 @@ export async function getUserDataMapByType(
           ? new Date(parseDbUTCDatetime(entry.lastDate))
           : null, // will be null if no logs
         streak: entry.streak,
+        totalPoints: entry.totalPoints ?? 0,
       });
     }
 
@@ -536,7 +549,12 @@ export function checkNewLogsForStreak(logs: NewLog[]) {
 export async function updatePointsFreezeStreak(
   taskUserData: Map<
     string,
-    { userId: string; lastDate: Date | null; streak: number }
+    {
+      userId: string;
+      lastDate: Date | null;
+      streak: number;
+      totalPoints: number;
+    }
   >,
   logsToInsert: NewLog[],
   userMap: Map<string, number>,
@@ -545,16 +563,12 @@ export async function updatePointsFreezeStreak(
 
   for (const [userId, newPoints] of userMap.entries()) {
     // Get previous user data
-    const result = await db
-      .select({
-        totalPoints: schema.users.totalPoints,
-        streak: schema.users.streak,
-      })
-      .from(schema.users)
-      .where(eq(schema.users.id, userId));
+    const result = {
+      ...taskUserData.get(userId),
+    };
 
-    const prevPoints = result[0]?.totalPoints ?? 0;
-    const prevStreak = result[0]?.streak ?? 0;
+    const prevPoints = result?.totalPoints ?? 0;
+    const prevStreak = result?.streak ?? 0;
 
     const newTotal = prevPoints + newPoints;
 
