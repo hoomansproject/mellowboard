@@ -111,7 +111,7 @@ export default function Component() {
               className={`flex w-full cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors sm:p-4 ${
                 user.active
                   ? "border-gray-200 hover:bg-gray-50"
-                  : "pointer-events-none cursor-not-allowed border-gray-200 bg-white opacity-50"
+                  : "pointer-events-none cursor-not-allowed border-gray-200 bg-white opacity-50 select-none"
               }`}
             >
               <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
