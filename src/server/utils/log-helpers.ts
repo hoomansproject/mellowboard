@@ -180,48 +180,98 @@ export function buildNameUsernameMap(
 
   return result;
 }
+
+async function batchUpdateUsersActive(
+  updates: { id: string; active: boolean }[],
+) {
+  if (updates.length === 0) return;
+
+  const cases = updates
+    .map(({ id, active }) => `WHEN '${id}' THEN ${active ? "TRUE" : "FALSE"}`)
+    .join(" ");
+
+  const ids = updates.map(({ id }) => `'${id}'`).join(", ");
+
+  const query = sql.raw(`
+    UPDATE users
+    SET active = CASE id
+      ${cases}
+    END
+    WHERE id IN (${ids});
+  `);
+
+  return db.execute(query); // or `await` if you’re in an async context
+}
+
 export async function getOrInsertUserIds(
   usernameMap: Map<string, { username: string; active: boolean }>,
 ): Promise<Map<string, string>> {
+  const names = Array.from(usernameMap.keys());
+
+  // Step 1: Find existing users in batch
+  const existingUsers = await db
+    .select({
+      id: schema.users.id,
+      name: schema.users.name,
+      active: schema.users.active,
+    })
+    .from(schema.users)
+    .where(inArray(schema.users.name, names));
+
   const userIds = new Map<string, string>();
+  const usersToInsert: (typeof schema.users.$inferInsert)[] = [];
+  const usersToUpdate: { id: string; active: boolean }[] = [];
 
-  for (const u of usernameMap.keys()) {
-    const [existing] = await db
-      .select({ id: schema.users.id, active: schema.users.active })
-      .from(schema.users)
-      .where(eq(schema.users.name, u))
-      .limit(1);
+  const existingMap = new Map(existingUsers.map((u) => [u.name, u]));
 
-    if (existing?.id) {
-      if (existing.active !== usernameMap.get(u)?.active) {
-        await db
-          .update(schema.users)
-          .set({ active: usernameMap.get(u)?.active })
-          .where(eq(schema.users.id, existing.id));
+  for (const name of names) {
+    const info = usernameMap.get(name)!;
+    const existing = existingMap.get(name);
+
+    if (existing) {
+      // Check if active status differs → schedule update
+      if (existing.active !== info.active) {
+        usersToUpdate.push({ id: existing.id, active: info.active });
       }
-      userIds.set(u, existing.id);
+      userIds.set(name, existing.id);
     } else {
-      const insertData = {
-        name: u,
+      // Prepare for batch insert
+      usersToInsert.push({
+        name,
         freezeCardCount: 0,
-        ...(usernameMap?.get(u)?.username
-          ? { github: usernameMap.get(u)?.username }
-          : {}),
-        active: usernameMap.get(u)?.active ?? false,
-      };
-
-      const [inserted] = await db
-        .insert(schema.users)
-        .values(insertData)
-        .returning({ id: schema.users.id });
-
-      if (inserted?.id) {
-        userIds.set(u, inserted.id);
-      }
+        github: info.username ?? null,
+        active: info.active,
+      });
     }
   }
+
+  // Step 2: Batch insert missing users
+  if (usersToInsert.length > 0) {
+    const inserted = await db
+      .insert(schema.users)
+      .values(usersToInsert)
+      .returning({ id: schema.users.id, name: schema.users.name });
+
+    for (const u of inserted) {
+      userIds.set(u.name, u.id);
+    }
+  }
+
+  // Step 3 (optional): Batch update users with changed "active"
+  // for (const { id, active } of usersToUpdate) {
+  //   await db
+  //     .update(schema.users)
+  //     .set({ active })
+  //     .where(eq(schema.users.id, id));
+  // }
+
+  if (usersToUpdate.length > 0) {
+    await batchUpdateUsersActive(usersToUpdate);
+  }
+
   return userIds;
 }
+
 export async function getUserStreak(
   userId: string,
   limit?: number,
@@ -394,10 +444,10 @@ export async function generateCronLogs(
       if (!(userData instanceof Map)) continue;
       const user = userData.get(username);
       if (!user) continue;
-      const lastDate = user?.lastDate ?? new Date(0); // fallback to epoch
+      const lastDate = user?.lastDate; // fallback to epoch
 
       for (const [date, { index: dindex }] of sortedDatesMap) {
-        if (date.getTime() <= lastDate.getTime()) continue;
+        if (lastDate && date.getTime() <= lastDate.getTime()) continue;
 
         const cell = rowData[dindex]?.values?.[uindex];
         const value = cell?.formattedValue ?? "";
@@ -541,6 +591,49 @@ export function checkNewLogsForStreak(logs: NewLog[]) {
   return streakMap;
 }
 
+// export async function updatePointsFreezeStreak(
+//   taskUserData: Map<
+//     string,
+//     {
+//       userId: string;
+//       lastDate: Date | null;
+//       streak: number;
+//       totalPoints: number;
+//     }
+//   >,
+//   logsToInsert: NewLog[],
+//   userMap: Map<string, number>,
+// ): Promise<void> {
+//   const streakMap = checkNewLogsForStreak(logsToInsert);
+
+//   for (const [userId, newPoints] of userMap.entries()) {
+//     // Get previous user data
+//     const result = {
+//       ...taskUserData.get(userId),
+//     };
+
+//     const prevPoints = result?.totalPoints ?? 0;
+//     const prevStreak = result?.streak ?? 0;
+
+//     const newTotal = prevPoints + newPoints;
+
+//     const prevThresholds = Math.floor(prevPoints / 50);
+//     const newThresholds = Math.floor(newTotal / 50);
+//     const thresholdsCrossed = Math.max(0, newThresholds - prevThresholds);
+
+//     const incrementStreak = streakMap.get(userId) ? prevStreak + 1 : 0;
+
+//     await db
+//       .update(schema.users)
+//       .set({
+//         totalPoints: newTotal,
+//         freezeCardCount: sql`${schema.users.freezeCardCount} + ${thresholdsCrossed}`,
+//         streak: incrementStreak,
+//       })
+//       .where(eq(schema.users.id, userId));
+//   }
+// }
+
 export async function updatePointsFreezeStreak(
   taskUserData: Map<
     string,
@@ -556,14 +649,17 @@ export async function updatePointsFreezeStreak(
 ): Promise<void> {
   const streakMap = checkNewLogsForStreak(logsToInsert);
 
-  for (const [userId, newPoints] of userMap.entries()) {
-    // Get previous user data
-    const result = {
-      ...taskUserData.get(userId),
-    };
+  const ids: string[] = [];
+  const totalPointsCases: string[] = [];
+  const freezeCardCases: string[] = [];
+  const streakCases: string[] = [];
 
-    const prevPoints = result?.totalPoints ?? 0;
-    const prevStreak = result?.streak ?? 0;
+  for (const [userId, newPoints] of userMap.entries()) {
+    const result = taskUserData.get(userId);
+    if (!result) continue;
+
+    const prevPoints = result.totalPoints ?? 0;
+    const prevStreak = result.streak ?? 0;
 
     const newTotal = prevPoints + newPoints;
 
@@ -571,15 +667,32 @@ export async function updatePointsFreezeStreak(
     const newThresholds = Math.floor(newTotal / 50);
     const thresholdsCrossed = Math.max(0, newThresholds - prevThresholds);
 
-    const incrementStreak = streakMap.get(userId) ? prevStreak + 1 : 0;
+    const newStreak = streakMap.get(userId) ? prevStreak + 1 : 0;
 
-    await db
-      .update(schema.users)
-      .set({
-        totalPoints: newTotal,
-        freezeCardCount: sql`${schema.users.freezeCardCount} + ${thresholdsCrossed}`,
-        streak: incrementStreak,
-      })
-      .where(eq(schema.users.id, userId));
+    ids.push(`'${userId}'`);
+    totalPointsCases.push(`WHEN '${userId}' THEN ${newTotal}`);
+    freezeCardCases.push(
+      `WHEN '${userId}' THEN "freeze_card_count" + ${thresholdsCrossed}`,
+    );
+    streakCases.push(`WHEN '${userId}' THEN ${newStreak}`);
   }
+
+  if (ids.length === 0) return;
+
+  const query = sql.raw(`
+    UPDATE users
+    SET
+      total_points = CASE id
+        ${totalPointsCases.join("\n")}
+      END,
+      freeze_card_count = CASE id
+        ${freezeCardCases.join("\n")}
+      END,
+      streak = CASE id
+        ${streakCases.join("\n")}
+      END
+    WHERE id IN (${ids.join(", ")});
+  `);
+
+  await db.execute(query);
 }
