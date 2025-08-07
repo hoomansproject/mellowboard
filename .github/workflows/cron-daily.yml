@@ -10,5 +10,5 @@ jobs:
     steps:
       - name: Hit Vercel cron endpoint (POST)
         run: |
-          curl -X POST https://mellowboard.vercel.app/api/run-cron-job \
+          curl -X POST http://mellowboard.netlify.app/api/run-cron-job \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
