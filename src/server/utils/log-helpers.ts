@@ -654,8 +654,22 @@ export async function updatePointsFreezeStreak(
   const freezeCardCases: string[] = [];
   const streakCases: string[] = [];
 
+  // Convert taskUserData to a Map from userId to user data for efficient lookup
+  const userIdDataMap = new Map<
+    string,
+    {
+      userId: string;
+      lastDate: Date | null;
+      streak: number;
+      totalPoints: number;
+    }
+  >();
+  for (const userData of taskUserData.values()) {
+    userIdDataMap.set(userData.userId, userData);
+  }
+
   for (const [userId, newPoints] of userMap.entries()) {
-    const result = taskUserData.get(userId);
+    const result = userIdDataMap.get(userId);
     if (!result) continue;
 
     const prevPoints = result.totalPoints ?? 0;
